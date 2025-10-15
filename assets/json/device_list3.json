@@ -1,0 +1,35 @@
+{
+    "username": "Adeesha Perera",
+    "assigned_date": "2025-09-04",
+    "devices": [
+        {
+            "model": "Logitech Wireless Mouse M185",
+            "quantity": 20,
+            "serialized": false
+        },
+        {
+            "imei": "356789012345678",
+            "serial_no": "R5CT80ABCXY",
+            "model": "Samsung Galaxy S23",
+            "serialized": true
+        },
+        {
+            "serial_no": "NHQ5GAA001234567890200",
+            "model": "Acer Aspire 7 Laptop",
+            "serialized": true
+        },
+        {
+            "model": "HDMI Cable 1.5m",
+            "quantity": 40,
+            "serialized": false
+        },
+        {
+            "imei": "351234567890123",
+            "serial_no": "FA24P1A1BCDE",
+            "model": "Google Pixel 8 Pro",
+            "serialized": true
+        }
+    ],
+    "location": "ICONIC Warehouse",
+    "locationId": "STL005"
+}

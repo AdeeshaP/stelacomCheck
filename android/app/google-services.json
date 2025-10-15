@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "678386923205",
+    "project_id": "icheck-649f6",
+    "storage_bucket": "icheck-649f6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:678386923205:android:27595b72c09442d9b9e2ac",
+        "android_client_info": {
+          "package_name": "com.aura.icheckapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "678386923205-n7v02lora74llqipg4f3ibaljlnntehd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBi5LXdblWrh2wgHgb9jy5tWJzu6LAz7bw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "678386923205-n7v02lora74llqipg4f3ibaljlnntehd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

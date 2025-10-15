@@ -1,0 +1,164 @@
+{
+  "username": "Adeesha Perera",
+  "assigned_date": "2025-09-04",
+  "devices": [
+    {
+      "model": "Logitech Wireless Mouse M185",
+      "quantity": 20,
+      "serialized": false
+    },
+    {
+      "imei": "356789012345678",
+      "serial_no": "SN-SAM-001",
+      "model": "Samsung Galaxy S23",
+      "serialized": true
+    },
+    {
+      "serial_no": "SN-ACR-019",
+      "model": "Acer Aspire 7 Laptop",
+      "serialized": true
+    },
+    {
+      "model": "HDMI Cable 1.5m",
+      "quantity": 40,
+      "serialized": false
+    },
+    {
+      "serial_no": "SN-LEN-011",
+      "model": "Lenovo ThinkPad X1",
+      "serialized": true
+    },
+    {
+      "imei": "351234567890123",
+      "serial_no": "SN-GPX-005",
+      "model": "Google Pixel 8 Pro",
+      "serialized": true
+    },
+    {
+      "model": "USB-C Charger 20W",
+      "quantity": 50,
+      "serialized": false
+    },
+    {
+      "serial_no": "SN-TPR-014",
+      "model": "TP-Link WiFi Router AX55",
+      "serialized": true
+    },
+    {
+      "model": "Office Chair Ergonomic",
+      "quantity": 8,
+      "serialized": false
+    },
+    {
+      "imei": "355678901234567",
+      "serial_no": "SN-SAM-007",
+      "model": "Samsung Galaxy M02",
+      "serialized": true
+    },
+    {
+      "serial_no": "SN-EPH-017",
+      "model": "Epson Projector EB-S41",
+      "serialized": true
+    },
+    {
+      "model": "Logitech H390 Headset",
+      "quantity": 12,
+      "serialized": false
+    },
+    {
+      "serial_no": "SN-MSFT-018",
+      "model": "Microsoft Surface Pro 9",
+      "serialized": true
+    },
+    {
+      "imei": "868451067157541",
+      "serial_no": "SN-RED-004",
+      "model": "Redmi Note 13 Pro+",
+      "serialized": true
+    },
+    {
+      "serial_no": "SN-CIS-013",
+      "model": "Cisco Router 2900",
+      "serialized": true
+    },
+    {
+      "model": "Cat6 Ethernet Cable 10m",
+      "quantity": 25,
+      "serialized": false
+    },
+    {
+      "serial_no": "SN-DEL-008",
+      "model": "Dell XPS 15 Laptop",
+      "serialized": true
+    },
+    {
+      "imei": "868765432109876",
+      "serial_no": "SN-MOT-003",
+      "model": "Motorola Edge 40",
+      "serialized": true
+    },
+    {
+      "serial_no": "SN-APP-010",
+      "model": "Apple MacBook Pro 16",
+      "serialized": true
+    },
+    {
+      "model": "TP-Link WiFi Adapter USB",
+      "quantity": 30,
+      "serialized": false
+    },
+    {
+      "serial_no": "SN-LOG-016",
+      "model": "Logitech Webcam C920",
+      "serialized": true
+    },
+    {
+      "model": "Anker Power Bank 20,000mAh",
+      "quantity": 10,
+      "serialized": false
+    },
+    {
+      "imei": "863456789012345",
+      "serial_no": "SN-IPH-002",
+      "model": "iPhone 14 Pro",
+      "serialized": true
+    },
+    {
+      "serial_no": "SN-HPD-009",
+      "model": "HP Desktop Elite 800",
+      "serialized": true
+    },
+    {
+      "model": "Kingston USB Drive 64GB",
+      "quantity": 60,
+      "serialized": false
+    },
+    {
+      "imei": "867818030320813",
+      "serial_no": "SN-HUA-006",
+      "model": "Huawei Y5",
+      "serialized": true
+    },
+    {
+      "serial_no": "SN-CAN-012",
+      "model": "Canon Laser Printer LBP2900",
+      "serialized": true
+    },
+    {
+      "serial_no": "SN-SAM-015",
+      "model": "Samsung Monitor 27”",
+      "serialized": true
+    },
+    {
+      "model": "Dell Keyboard KB216",
+      "quantity": 15,
+      "serialized": false
+    },
+    {
+      "imei": "868765432109876",
+      "serial_no": "SN-ASU-020",
+      "model": "Asus ROG Strix G15",
+      "serialized": true
+    }
+  ]
+}

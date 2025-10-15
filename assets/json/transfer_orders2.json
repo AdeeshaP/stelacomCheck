@@ -1,0 +1,407 @@
+{
+  "transfer_orders": [
+    {
+      "transfer_id": "TR-100001",
+      "from_location": "Main Warehouse",
+      "to_location": "Galle Service Centre",
+      "assigned_date": "2025-08-14",
+      "status": "Received",
+      "items": [
+        {
+          "model": "Vivo Y04 4GB 64GB Jade Green",
+          "brand": "Vivo",
+          "quantity": 5,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "867123451000009",
+            "867123451000018",
+            "867123451000027",
+            "867123451000036",
+            "867123451000045"
+          ]
+        },
+        {
+          "model": "Samsung Travel Adapter 25W Black",
+          "brand": "Samsung",
+          "quantity": 10,
+          "serialized": false,
+          "category": "Accessory"
+        },
+        {
+          "model": "Lenovo ThinkPad X1",
+          "brand": "Lenovo",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "LTPX1-2025-000123"
+          ]
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-100002",
+      "from_location": "Colombo Warehouse",
+      "to_location": "Galle Service Centre",
+      "assigned_date": "2025-08-14",
+      "status": "In-Transit",
+      "items": [
+        {
+          "model": "Epson Projector EB-S41",
+          "brand": "Epson",
+          "quantity": 2,
+          "serialized": true,
+          "category": "Projector",
+          "serial_nos": [
+            "EPSN-EB-S41-778899",
+            "EPSN-EB-W76-232828"
+          ]
+        },
+        {
+          "model": "Motorola G05 4GB 64GB Plum Red",
+          "brand": "Motorola",
+          "quantity": 13,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "356789012345678",
+            "356789019283645",
+            "356789017456932",
+            "356789018926473",
+            "356789016347829",
+            "356789013468297",
+            "356789014982635",
+            "356789015637482",
+            "356789019476823",
+            "356789012938476",
+            "356789017492836",
+            "356789018763492",
+            "356789013847265"
+          ]
+        },
+        {
+          "model": "Honor X6C TPU Back Cover",
+          "brand": "Honor",
+          "quantity": 20,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-100003",
+      "from_location": "Kandy Warehouse",
+      "to_location": "Galle Service Centre",
+      "assigned_date": "2025-08-15",
+      "status": "In-Transit",
+      "items": [
+        {
+          "model": "TP-Link WiFi Router AX55",
+          "brand": "TP-Link",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Router",
+          "serial_nos": [
+            "TPLINK-AX55-112233"
+          ]
+        },
+        {
+          "model": "Oppo A58 8GB 128GB Glowing Black",
+          "brand": "Oppo",
+          "quantity": 7,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "353222333444102",
+            "353222333444111",
+            "353222333444120",
+            "353222333444139",
+            "353222333444148",
+            "353222333444157",
+            "353222333444166"
+          ]
+        },
+        {
+          "model": "Samsung Travel Adapter 25W Black",
+          "brand": "Samsung",
+          "quantity": 5,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-100004",
+      "from_location": "Main Warehouse",
+      "to_location": "Galle Service Centre",
+      "assigned_date": "2025-08-15",
+      "status": "In-Transit",
+      "items": [
+        {
+          "model": "Acer Aspire 7 Laptop",
+          "brand": "Acer",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "ACER-A7-445566"
+          ]
+        },
+        {
+          "model": "iPhone 14 128GB Midnight",
+          "brand": "Apple",
+          "quantity": 3,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "352000111222333",
+            "352123213144555",
+            "353445465644555"
+          ]
+        },
+        {
+          "model": "Honor X6C TPU Back Cover",
+          "brand": "Honor",
+          "quantity": 15,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-100005",
+      "from_location": "Galle Warehouse",
+      "to_location": "Galle Service Centre",
+      "assigned_date": "2025-08-15",
+      "status": "In-Transit",
+      "items": [
+        {
+          "model": "Realme Narzo 60x 5G",
+          "brand": "Realme",
+          "quantity": 3,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "351234567890113",
+            "351234568901225",
+            "351234569012345"
+          ]
+        },
+        {
+          "model": "Huawei Y5 64GB Sapphire Blue",
+          "brand": "Huawei",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "serial_nos": [
+            "HWY5-778899-BLUE"
+          ]
+        },
+        {
+          "model": "Samsung Travel Adapter 25W Black",
+          "brand": "Samsung",
+          "quantity": 25,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-100006",
+      "from_location": "Jaffna Warehouse",
+      "to_location": "Galle Service Centre",
+      "assigned_date": "2025-08-16",
+      "status": "Partial",
+      "items": [
+        {
+          "model": "Samsung Galaxy S23 256GB Phantom Black",
+          "brand": "Samsung",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "359999888777666"
+          ]
+        },
+        {
+          "model": "TP-Link WiFi Router AX55",
+          "brand": "TP-Link",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Router",
+          "serial_nos": [
+            "TPLINK-AX55-112234"
+          ]
+        },
+        {
+          "model": "Honor X6C TPU Back Cover",
+          "brand": "Honor",
+          "quantity": 40,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-100007",
+      "from_location": "Main Warehouse",
+      "to_location": "Galle Service Centre",
+      "assigned_date": "2025-08-16",
+      "status": "Received",
+      "items": [
+        {
+          "model": "Redmi Note 13 Pro+ 5G",
+          "brand": "Redmi",
+          "quantity": 10,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "358888777666211",
+            "358888777666344",
+            "358888777666476",
+            "358888777666583",
+            "358888777666690",
+            "358888777666807",
+            "358888777666914",
+            "358888777666120",
+            "358888777666351",
+            "358888777666765"
+          ]
+        },
+        {
+          "model": "Epson Projector EB-S41",
+          "brand": "Epson",
+          "quantity": 2,
+          "serialized": true,
+          "category": "Projector",
+          "serial_nos": [
+            "EPSN-EB-S41-778900",
+            "EPSN-EB-S41-778901"
+          ]
+        },
+        {
+          "model": "Samsung Travel Adapter 25W Black",
+          "brand": "Samsung",
+          "quantity": 30,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-100008",
+      "from_location": "Matara Warehouse",
+      "to_location": "Galle Service Centre",
+      "assigned_date": "2025-08-16",
+      "status": "In-Transit",
+      "items": [
+        {
+          "model": "Lenovo ThinkPad X1",
+          "brand": "Lenovo",
+          "quantity": 2,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "LTPX1-2025-000124",
+            "LTPX1-2025-000125"
+          ]
+        },
+        {
+          "model": "Google Pixel 8 Pro 128GB Obsidian",
+          "brand": "Google",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "354444555666777"
+          ]
+        },
+        {
+          "model": "Honor X6C TPU Back Cover",
+          "brand": "Honor",
+          "quantity": 50,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-100009",
+      "from_location": "Colombo Warehouse",
+      "to_location": "Galle Service Centre",
+      "assigned_date": "2025-08-17",
+      "status": "In-Transit",
+      "items": [
+        {
+          "model": "Acer Aspire 7 Laptop",
+          "brand": "Acer",
+          "quantity": 5,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "ACER-A7-445567",
+            "ACER-A7-445568",
+            "ACER-A7-445569",
+            "ACER-A7-445570",
+            "ACER-A7-445571"
+          ]
+        },
+        {
+          "model": "iPhone 14 128GB Blue",
+          "brand": "Apple",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "352000111222334"
+          ]
+        },
+        {
+          "model": "Samsung Travel Adapter 25W Black",
+          "brand": "Samsung",
+          "quantity": 20,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-100010",
+      "from_location": "Kurunegala Warehouse",
+      "to_location": "Galle Service Centre",
+      "assigned_date": "2025-08-17",
+      "status": "In-Transit",
+      "items": [
+        {
+          "model": "Samsung Galaxy S23 256GB Cream",
+          "brand": "Samsung",
+          "quantity": 2,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "359999888777667",
+            "354563534242342"
+          ]
+        },
+        {
+          "model": "Huawei Y5 64GB Black",
+          "brand": "Huawei",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "serial_nos": [
+            "HWY5-778900-BLK"
+          ]
+        },
+        {
+          "model": "Honor X6C TPU Back Cover",
+          "brand": "Honor",
+          "quantity": 35,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    }
+  ]
+}

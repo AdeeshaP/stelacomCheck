@@ -1,0 +1,75 @@
+{
+    "username": "Adeesha Perera",
+    "assigned_date": "2025-09-04",
+    "devices": [
+        {
+            "model": "Logitech Wireless Mouse M185",
+            "quantity": 20,
+            "serialized": false
+        },
+        {
+            "imei": "356789012345678",
+            "serial_no": "R5CT80ABCXY",
+            "model": "Samsung Galaxy S23",
+            "serialized": true
+        },
+        {
+            "serial_no": "NHQ5GAA001234567890200",
+            "model": "Acer Aspire 7 Laptop",
+            "serialized": true
+        },
+        {
+            "model": "HDMI Cable 1.5m",
+            "quantity": 40,
+            "serialized": false
+        },
+        {
+            "serial_no": "PF2A1ABC",
+            "model": "Lenovo ThinkPad X1",
+            "serialized": true
+        },
+        {
+            "imei": "351234567890123",
+            "serial_no": "FA24P1A1BCDE",
+            "model": "Google Pixel 8 Pro",
+            "serialized": true
+        },
+        {
+            "model": "USB-C Charger 20W",
+            "quantity": 50,
+            "serialized": false
+        },
+        {
+            "serial_no": "221CAX55A12345",
+            "model": "TP-Link WiFi Router AX55",
+            "serialized": true
+        },
+        {
+            "serial_no": "X3N012345678",
+            "model": "Epson Projector EB-S41",
+            "serialized": true
+        },
+        {
+            "model": "Logitech H390 Headset",
+            "quantity": 12,
+            "serialized": false
+        },
+        {
+            "imei": "868451067157541",
+            "serial_no": "23108RN13P12345",
+            "model": "Redmi Note 13 Pro+",
+            "serialized": true
+        },
+        {
+            "model": "Kingston USB Drive 64GB",
+            "quantity": 60,
+            "serialized": false
+        },
+        {
+            "imei": "867818030320813",
+            "serial_no": "86H9C19234567890",
+            "model": "Huawei Y5",
+            "serialized": true
+        }
+    ]
+}

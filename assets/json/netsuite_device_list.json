@@ -1,0 +1,198 @@
+{
+    "data": {
+        "dos": [
+            {
+                "id": 760983,
+                "Item Code": "2990451199",
+                "Item": "Comfast CF-WR302S V2-Wireless WIFI Repeater Serialized DEMO",
+                "(c)Item Category": "STELACOM FUNDED : DMO",
+                "Number": "2021NPCF0158",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 760982,
+                "Item Code": "2990451599",
+                "Item": "Comfast CF-XR10 1800Mbps AX Wireless Router - DEMO",
+                "(c)Item Category": "STELACOM FUNDED : DMO",
+                "Number": "112110031801A002031",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 441929,
+                "Item Code": "2800312148",
+                "Item": "Facial time attendance and access control device",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "711100097",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 441930,
+                "Item Code": "2800312148",
+                "Item": "Facial time attendance and access control device",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "711100098",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 441928,
+                "Item Code": "2800312148",
+                "Item": "Facial time attendance and access control device",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "711100096",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 441931,
+                "Item Code": "2800312148",
+                "Item": "Facial time attendance and access control device",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "711100099",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 441927,
+                "Item Code": "2800312148",
+                "Item": "Facial time attendance and access control device",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "711100095",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 441934,
+                "Item Code": "2800312147",
+                "Item": "Facial time attendance and access control device with temperature",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "711100094",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 441932,
+                "Item Code": "2800312147",
+                "Item": "Facial time attendance and access control device with temperature",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "711100092",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 441933,
+                "Item Code": "2800312147",
+                "Item": "Facial time attendance and access control device with temperature",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "711100093",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 424961,
+                "Item Code": "10001474",
+                "Item": "iCheck FOTRIC 226B Temperature Scanning Face AI Imager for Crowd Control",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "T2S2K2S2122",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 424960,
+                "Item Code": "10001474",
+                "Item": "iCheck FOTRIC 226B Temperature Scanning Face AI Imager for Crowd Control",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "T2S2K311067",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 634760,
+                "Item Code": "2800312133",
+                "Item": "XGIMI-CC Aurora -Smart Projector - Dark Knight (DEMO)",
+                "(c)Item Category": "STELACOM FUNDED : DMO",
+                "Number": "EF46JA1B8RBT",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 173351,
+                "Item Code": "2000500101",
+                "Item": "XGIMI-H1-Smart Projector - Black",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "WUL7J36CBTBD",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 683754,
+                "Item Code": "2000500501",
+                "Item": "XGIMI-H1-Smart Projector Black - DEMO",
+                "(c)Item Category": "STELACOM FUNDED : DMO",
+                "Number": "WUL7J3611TBQ",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            },
+            {
+                "id": 562879,
+                "Item Code": "2800312230",
+                "Item": "Xiaomi Mi True Wireless Earbuds Basic 2",
+                "(c)Item Category": "STELACOM FUNDED : ACC",
+                "Number": "28592/04418052",
+                "Location": "Ninehearts Repairer Center",
+                "On Hand": "1",
+                "Available": "1",
+                "On Order": "0",
+                "In Transit": "0"
+            }
+        ]
+    }
+}

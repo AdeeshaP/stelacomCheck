@@ -1,0 +1,631 @@
+{
+  "recall_transfer_orders": [
+    {
+      "transfer_id": "TR-300001",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-01",
+      "status": "Pending",
+      "items": [
+        {
+          "model": "Samsung Galaxy A35 128GB Silver",
+          "brand": "Samsung",
+          "quantity": 3,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "351111222333101",
+            "351111222333119",
+            "351111222333127"
+          ]
+        },
+        {
+          "model": "Dell Inspiron 15 3520",
+          "brand": "Dell",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "DELL-3520-10001"
+          ]
+        },
+        {
+          "model": "Logitech Wireless Mouse M235",
+          "brand": "Logitech",
+          "quantity": 12,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300002",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-01",
+      "status": "Pending",
+      "items": [
+        {
+          "model": "Oppo Reno 12 5G",
+          "brand": "Oppo",
+          "quantity": 5,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "352222333444101",
+            "352222333444119",
+            "352222333444127",
+            "352222333444135",
+            "352222333444143"
+          ]
+        },
+        {
+          "model": "Epson EB-X06 Projector",
+          "brand": "Epson",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Projector",
+          "serial_nos": [
+            "EPX06-889900"
+          ]
+        },
+        {
+          "model": "Sandisk 64GB USB 3.0",
+          "brand": "Sandisk",
+          "quantity": 20,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300003",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-02",
+      "status": "Pending",
+      "items": [
+        {
+          "model": "Apple iPhone 15 128GB Black",
+          "brand": "Apple",
+          "quantity": 2,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "353000111222333",
+            "353000111222344"
+          ]
+        },
+        {
+          "model": "Samsung Galaxy Tab S9",
+          "brand": "Samsung",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Tablet",
+          "serial_nos": [
+            "TABS9-555888"
+          ]
+        },
+        {
+          "model": "Anker 20W Charger",
+          "brand": "Anker",
+          "quantity": 15,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300004",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-02",
+      "status": "Sent",
+      "items": [
+        {
+          "model": "Realme GT 5 Pro",
+          "brand": "Realme",
+          "quantity": 4,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "354444555666101",
+            "354444555666119",
+            "354444555666127",
+            "354444555666135"
+          ]
+        },
+        {
+          "model": "HP Pavilion Laptop 14",
+          "brand": "HP",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "HP-PAV14-001"
+          ]
+        },
+        {
+          "model": "Samsung Travel Adapter 25W White",
+          "brand": "Samsung",
+          "quantity": 18,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300005",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-03",
+      "status": "Pending",
+      "items": [
+        {
+          "model": "Xiaomi Redmi Note 14 5G",
+          "brand": "Xiaomi",
+          "quantity": 6,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "355111222333101",
+            "355111222333119",
+            "355111222333127",
+            "355111222333135",
+            "355111222333143",
+            "355111222333151"
+          ]
+        },
+        {
+          "model": "Canon Pixma G3020 Printer",
+          "brand": "Canon",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Printer",
+          "serial_nos": [
+            "CAN-G3020-99001"
+          ]
+        },
+        {
+          "model": "Sony WH-CH520 Bluetooth Headphones",
+          "brand": "Sony",
+          "quantity": 10,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300006",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-03",
+      "status": "Pending",
+      "items": [
+        {
+          "model": "OnePlus Nord CE4",
+          "brand": "OnePlus",
+          "quantity": 3,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "356111222333101",
+            "356111222333119",
+            "356111222333127"
+          ]
+        },
+        {
+          "model": "Acer Aspire 7",
+          "brand": "Acer",
+          "quantity": 2,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "ACER-A7-112233",
+            "ACER-A7-112234"
+          ]
+        },
+        {
+          "model": "TP-Link Archer AX73 Router",
+          "brand": "TP-Link",
+          "quantity": 5,
+          "serialized": true,
+          "category": "Router",
+          "serial_nos": [
+            "TPLINK-AX73-001",
+            "TPLINK-AX73-002",
+            "TPLINK-AX73-003",
+            "TPLINK-AX73-004",
+            "TPLINK-AX73-005"
+          ]
+        },
+        {
+          "model": "Motorola Edge 50 Fusion",
+          "brand": "Motorola",
+          "quantity": 4,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "358111222333101",
+            "358111222333119",
+            "358111222333127",
+            "358111222333135"
+          ]
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300007",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-04",
+      "status": "Pending",
+      "items": [
+        {
+          "model": "Google Pixel 8a",
+          "brand": "Google",
+          "quantity": 2,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "357111222333101",
+            "357111222333119"
+          ]
+        },
+        {
+          "model": "Lenovo ThinkPad X1 Carbon Gen 11",
+          "brand": "Lenovo",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "LTPX1C-2025-001"
+          ]
+        },
+        {
+          "model": "Philips 32-inch Monitor",
+          "brand": "Philips",
+          "quantity": 3,
+          "serialized": true,
+          "category": "Monitor",
+          "serial_nos": [
+            "PH32-445566",
+            "PH32-445567",
+            "PH32-445568"
+          ]
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300008",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-04",
+      "status": "Pending",
+      "items": [
+        {
+          "model": "Motorola Edge 50 Fusion",
+          "brand": "Motorola",
+          "quantity": 4,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "358111222333101",
+            "358111222333119",
+            "358111222333127",
+            "358111222333135"
+          ]
+        },
+        {
+          "model": "Asus Vivobook 16",
+          "brand": "Asus",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "ASUS-VB16-001"
+          ]
+        },
+        {
+          "model": "JBL Flip 6 Speaker",
+          "brand": "JBL",
+          "quantity": 8,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300009",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-05",
+      "status": "Pending",
+      "items": [
+        {
+          "model": "Samsung Galaxy S24 Ultra",
+          "brand": "Samsung",
+          "quantity": 2,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "359111222333101",
+            "359111222333119"
+          ]
+        },
+        {
+          "model": "HP Omen 16 Gaming Laptop",
+          "brand": "HP",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "HP-OMEN16-001"
+          ]
+        },
+        {
+          "model": "Sony Bravia 50-inch TV",
+          "brand": "Sony",
+          "quantity": 2,
+          "serialized": true,
+          "category": "TV",
+          "serial_nos": [
+            "SONY-TV50-1001",
+            "SONY-TV50-1002"
+          ]
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300010",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-05",
+      "status": "Pending",
+      "items": [
+        {
+          "model": "Vivo V40 5G",
+          "brand": "Vivo",
+          "quantity": 3,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "360111222333101",
+            "360111222333119",
+            "360111222333127"
+          ]
+        },
+        {
+          "model": "Dell XPS 13 Plus",
+          "brand": "Dell",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "DELL-XPS13P-001"
+          ]
+        },
+        {
+          "model": "TP-Link Deco M5 Mesh WiFi",
+          "brand": "TP-Link",
+          "quantity": 4,
+          "serialized": true,
+          "category": "Router",
+          "serial_nos": [
+            "TPLINK-DECO-01",
+            "TPLINK-DECO-02",
+            "TPLINK-DECO-03",
+            "TPLINK-DECO-04"
+          ]
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300011",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-06",
+      "status": "Sent",
+      "items": [
+        {
+          "model": "Apple Watch Series 10",
+          "brand": "Apple",
+          "quantity": 2,
+          "serialized": true,
+          "category": "Smartwatch",
+          "serial_nos": [
+            "AW10-445566",
+            "AW10-445567"
+          ]
+        },
+        {
+          "model": "Xiaomi Pad 6 Pro",
+          "brand": "Xiaomi",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Tablet",
+          "serial_nos": [
+            "XM-PAD6P-001"
+          ]
+        },
+        {
+          "model": "Bose QuietComfort 45 Headphones",
+          "brand": "Bose",
+          "quantity": 5,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300012",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-06",
+      "status": "Sent",
+      "items": [
+        {
+          "model": "Nothing Phone 2a",
+          "brand": "Nothing",
+          "quantity": 3,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "361111222333101",
+            "361111222333119",
+            "361111222333127"
+          ]
+        },
+        {
+          "model": "Acer Swift Go 14",
+          "brand": "Acer",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "ACER-SWGO14-001"
+          ]
+        },
+        {
+          "model": "Samsung Galaxy Buds3 Pro",
+          "brand": "Samsung",
+          "quantity": 8,
+          "serialized": false,
+          "category": "Accessory"
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300013",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-07",
+      "status": "Partial",
+      "items": [
+        {
+          "model": "Huawei Mate 60 Pro",
+          "brand": "Huawei",
+          "quantity": 2,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "362111222333101",
+            "362111222333119"
+          ]
+        },
+        {
+          "model": "MSI Prestige 14 Evo",
+          "brand": "MSI",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "MSI-P14E-001"
+          ]
+        },
+        {
+          "model": "TP-Link Tapo C200 Smart Camera",
+          "brand": "TP-Link",
+          "quantity": 5,
+          "serialized": true,
+          "category": "Camera",
+          "serial_nos": [
+            "TP-C200-01",
+            "TP-C200-02",
+            "TP-C200-03",
+            "TP-C200-04",
+            "TP-C200-05"
+          ]
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300014",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-07",
+      "status": "Pending",
+      "items": [
+        {
+          "model": "Redmi Note 13 Turbo",
+          "brand": "Xiaomi",
+          "quantity": 4,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "363111222333101",
+            "363111222333119",
+            "363111222333127",
+            "363111222333135"
+          ]
+        },
+        {
+          "model": "Apple MacBook Air M3",
+          "brand": "Apple",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "MBA-M3-2025-001"
+          ]
+        },
+        {
+          "model": "LG 43-inch 4K Smart TV",
+          "brand": "LG",
+          "quantity": 2,
+          "serialized": true,
+          "category": "TV",
+          "serial_nos": [
+            "LGTV43-001",
+            "LGTV43-002"
+          ]
+        }
+      ]
+    },
+    {
+      "transfer_id": "TR-300015",
+      "from_location": "Galle Warehouse",
+      "to_location": "Main Warehouse",
+      "assigned_date": "2025-09-08",
+      "status": "Pending",
+      "items": [
+        {
+          "model": "Poco F6 Pro",
+          "brand": "Poco",
+          "quantity": 3,
+          "serialized": true,
+          "category": "Mobile Phone",
+          "imeis": [
+            "364111222333101",
+            "364111222333119",
+            "364111222333127"
+          ]
+        },
+        {
+          "model": "Razer Blade 15",
+          "brand": "Razer",
+          "quantity": 1,
+          "serialized": true,
+          "category": "Laptop",
+          "serial_nos": [
+            "RAZER-B15-001"
+          ]
+        },
+        {
+          "model": "Samsung Portable SSD T7 1TB",
+          "brand": "Samsung",
+          "quantity": 5,
+          "serialized": true,
+          "category": "Storage",
+          "serial_nos": [
+            "SSDT7-001",
+            "SSDT7-002",
+            "SSDT7-003",
+            "SSDT7-004",
+            "SSDT7-005"
+          ]
+        }
+      ]
+    }
+  ]
+}
