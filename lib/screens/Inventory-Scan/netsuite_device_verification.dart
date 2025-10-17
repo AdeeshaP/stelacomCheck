@@ -3,11 +3,12 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:stelacom_check/app-services/stelacom_api_service.dart';
 import 'package:stelacom_check/constants.dart';
 import 'package:stelacom_check/models/netsuite_device_item.dart';
 import 'package:stelacom_check/models/scanned_item2.dart';
 import 'package:stelacom_check/responsive.dart';
-import 'package:stelacom_check/screens/Inventroy-Scan/netsuite_verification_results.dart';
+import 'package:stelacom_check/screens/Inventory-Scan/netsuite_verification_results.dart';
 import 'package:stelacom_check/screens/enroll/code_verification.dart';
 import 'package:stelacom_check/screens/menu/about_us.dart';
 import 'package:stelacom_check/screens/menu/contact_us.dart';
@@ -97,6 +98,7 @@ class _NetsuiteDeviceItemScanScreenState
     print("Location description ID: ${widget.locationDescription}");
 
     // Load devices from API
+    
     await loadDevicesFromAPI();
   }
 
@@ -109,11 +111,11 @@ class _NetsuiteDeviceItemScanScreenState
 
     try {
       // Option 1: Load from actual API (COMMENT THIS FOR TESTING)
-      // final response = await StelacomApiService.loadDeviceListOfLocation(
-      //   int.parse(widget.locationDescription),
-      // );
+      final response = await StelacomApiService.loadDeviceListOfLocation(
+        int.parse(widget.locationDescription),
+      );
 
-      final response = await _loadFromLocalJSON();
+      // final response = await _loadFromLocalJSON();
 
       setState(() {
         List<dynamic> dosArray = [];
@@ -393,7 +395,7 @@ class _NetsuiteDeviceItemScanScreenState
             ),
           ],
         ),
-        duration: Duration(seconds: 2),
+        duration: Duration(milliseconds: 1500),
         backgroundColor: Colors.green,
       ),
     );
@@ -445,7 +447,7 @@ class _NetsuiteDeviceItemScanScreenState
             Expanded(child: Text('No matching device found in inventory.')),
           ],
         ),
-        duration: Duration(seconds: 2),
+        duration: Duration(milliseconds: 1500),
         backgroundColor: Colors.red,
       ),
     );
@@ -611,7 +613,7 @@ class _NetsuiteDeviceItemScanScreenState
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
+                  CircularProgressIndicator(color: actionBtnColor),
                   SizedBox(height: 20),
                   Text('Loading devices from NetSuite...'),
                 ],
@@ -638,7 +640,7 @@ class _NetsuiteDeviceItemScanScreenState
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(10),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 15),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.only(
@@ -656,13 +658,23 @@ class _NetsuiteDeviceItemScanScreenState
                     ),
                     child: Row(
                       children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.arrow_back,
-                            color: screenHeadingColor,
-                            size: 24,
+                        Expanded(
+                          flex: 1,
+                          child: GestureDetector(
+                            child: Icon(
+                              Icons.arrow_back,
+                              color: screenHeadingColor,
+                              size: Responsive.isMobileSmall(context)
+                                  ? 20
+                                  : Responsive.isMobileMedium(context) ||
+                                        Responsive.isMobileLarge(context)
+                                  ? 24
+                                  : Responsive.isTabletPortrait(context)
+                                  ? 31
+                                  : 35,
+                            ),
+                            onTap: () => Navigator.of(context).pop(),
                           ),
-                          onPressed: () => Navigator.of(context).pop(),
                         ),
                         Expanded(
                           flex: 6,
@@ -671,11 +683,19 @@ class _NetsuiteDeviceItemScanScreenState
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: screenHeadingColor,
-                              fontSize: 22,
+                              fontSize: Responsive.isMobileSmall(context)
+                                  ? 22
+                                  : Responsive.isMobileMedium(context) ||
+                                        Responsive.isMobileLarge(context)
+                                  ? 26
+                                  : Responsive.isTabletPortrait(context)
+                                  ? 32
+                                  : 32,
                             ),
                             textAlign: TextAlign.center,
                           ),
                         ),
+                        Expanded(child: SizedBox(), flex: 1),
                       ],
                     ),
                   ),

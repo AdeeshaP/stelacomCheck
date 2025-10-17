@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:stelacom_check/screens/Inventory-Recall/recall_orders_screen.dart';
-import 'package:stelacom_check/screens/Inventroy-Scan/enhanced_barcode_scan.dart';
 import 'package:stelacom_check/app-services/api_service.dart';
 import 'package:stelacom_check/main.dart';
-import 'package:stelacom_check/screens/Inventroy-Scan/netsuite_device_verification.dart';
+import 'package:stelacom_check/screens/Inventory-Scan/netsuite_device_verification.dart';
 import 'package:stelacom_check/screens/Visits/capture_screen.dart';
 import 'package:stelacom_check/screens/checkin-checkout/checkin_capture_screen.dart';
 import 'package:stelacom_check/screens/checkin-checkout/checkout_capture_screen.dart';
