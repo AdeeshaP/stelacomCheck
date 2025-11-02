@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:stelacom_check/app-services/logout_service.dart';
+import 'package:stelacom_check/app-services/submitted_device_service.dart';
+import 'package:stelacom_check/app-services/verification_email_service.dart';
 import 'package:stelacom_check/constants.dart';
 import 'package:stelacom_check/models/netsuite_device_item.dart';
 import 'package:stelacom_check/responsive.dart';
-import 'package:stelacom_check/screens/enroll/code_verification.dart';
 import 'package:stelacom_check/screens/home/first_screen.dart';
 import 'package:stelacom_check/screens/menu/about_us.dart';
 import 'package:stelacom_check/screens/menu/contact_us.dart';
@@ -18,12 +20,16 @@ class NetsuiteVerificationResultsScreen extends StatefulWidget {
   final int index;
   final List<NetsuiteDeviceItem> deviceList;
   final Function(List<NetsuiteDeviceItem>)? onDeviceListUpdated;
+  final String? locationId;
+  final String? location;
 
   const NetsuiteVerificationResultsScreen({
     super.key,
     required this.index,
     required this.deviceList,
     this.onDeviceListUpdated,
+    required this.location,
+    required this.locationId,
   });
 
   @override
@@ -32,7 +38,8 @@ class NetsuiteVerificationResultsScreen extends StatefulWidget {
 }
 
 class _NetsuiteVerificationResultsScreenState
-    extends State<NetsuiteVerificationResultsScreen> {
+    extends State<NetsuiteVerificationResultsScreen>
+    with WidgetsBindingObserver {
   late SharedPreferences _storage;
   Map<String, dynamic>? userObj;
   String employeeCode = "";
@@ -44,6 +51,7 @@ class _NetsuiteVerificationResultsScreenState
   int _currentPage = 0;
   int _rowsPerPage = 5;
   DeviceDataSource? _dataSource;
+  bool _reportSubmitted = false;
 
   @override
   void initState() {
@@ -51,6 +59,35 @@ class _NetsuiteVerificationResultsScreenState
     deviceList = List.from(widget.deviceList);
     _initializeDataSource();
     getSharedPrefs();
+    WidgetsBinding.instance.addObserver(this); // Add lifecycle observer
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // Remove lifecycle observer
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // When app returns to foreground after email app
+    if (state == AppLifecycleState.resumed && _reportSubmitted) {
+      _reportSubmitted = false;
+
+      // Navigate to home screen
+      Future.delayed(Duration(milliseconds: 500), () {
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(index2: widget.index),
+            ),
+            (route) => false,
+          );
+        }
+      });
+    }
   }
 
   void _initializeDataSource() {
@@ -74,6 +111,7 @@ class _NetsuiteVerificationResultsScreenState
         print('Error parsing user data: $e');
       }
     }
+    print(_currentPage);
   }
 
   Future<void> _saveDeviceListToStorage() async {
@@ -117,11 +155,12 @@ class _NetsuiteVerificationResultsScreenState
       );
     } else if (choice == _menuOptions[4]) {
       if (!mounted) return;
-      _storage.clear();
-      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => CodeVerificationScreen()),
-        (route) => false,
-      );
+      // _storage.clear();
+      // Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      //   MaterialPageRoute(builder: (context) => CodeVerificationScreen()),
+      //   (route) => false,
+      // );
+      LogoutService.logoutWithOptions(context);
     }
   }
 
@@ -137,10 +176,10 @@ class _NetsuiteVerificationResultsScreenState
         filtered = filtered.where((item) => !item.isVerified).toList();
         break;
       case "Serialized":
-        filtered = filtered.where((item) => item.serialized).toList();
+        filtered = filtered.where((item) => item.isSerialized).toList();
         break;
       case "Non-Serialized":
-        filtered = filtered.where((item) => !item.serialized).toList();
+        filtered = filtered.where((item) => !item.isSerialized).toList();
         break;
       default:
         break;
@@ -150,8 +189,8 @@ class _NetsuiteVerificationResultsScreenState
     if (searchQuery.isNotEmpty) {
       filtered = filtered.where((item) {
         final query = searchQuery.toLowerCase();
-        return item.model.toLowerCase().contains(query) ||
-            (item.number?.toLowerCase().contains(query) ?? false) ||
+        return item.item.toLowerCase().contains(query) ||
+            (item.serialNumber?.toLowerCase().contains(query) ?? false) ||
             item.itemCode.toLowerCase().contains(query);
       }).toList();
     }
@@ -161,9 +200,10 @@ class _NetsuiteVerificationResultsScreenState
 
   int get verifiedCount => deviceList.where((item) => item.isVerified).length;
   int get totalCount => deviceList.length;
-  int get serializedCount => deviceList.where((item) => item.serialized).length;
+  int get serializedCount =>
+      deviceList.where((item) => item.isSerialized).length;
   int get nonSerializedCount =>
-      deviceList.where((item) => !item.serialized).length;
+      deviceList.where((item) => !item.isSerialized).length;
   bool get allItemsVerified => verifiedCount == totalCount;
 
   void _updateDataSource() {
@@ -177,36 +217,82 @@ class _NetsuiteVerificationResultsScreenState
   }
 
   void _showUnverifiedItemActions(NetsuiteDeviceItem item) {
-    if (!item.serialized) {
-      _showNonSerializedItemDialog(item);
+    if (!item.isSerialized) {
+      _showQuantityUpdateDialogForNZ(item);
     } else {
       _showSerializedItemActions(item);
     }
   }
+
+  // Serialized item actions dialog
 
   void _showSerializedItemActions(NetsuiteDeviceItem item) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Unverified Item Actions'),
+          // backgroundColor: Colors.white,
+          title: Text(
+            'Unverified Item Actions',
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Item Code: ${item.itemCode}',
-                style: TextStyle(fontSize: 14),
+                style: TextStyle(
+                  fontSize: Responsive.isMobileSmall(context)
+                      ? 13
+                      : Responsive.isMobileMedium(context) ||
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 18,
+                ),
               ),
               Text(
-                'Number: ${item.number ?? "N/A"}',
-                style: TextStyle(fontSize: 14),
+                'Number: ${item.serialNumber ?? "N/A"}',
+                style: TextStyle(
+                  fontSize: Responsive.isMobileSmall(context)
+                      ? 13
+                      : Responsive.isMobileMedium(context) ||
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 18,
+                ),
               ),
-              Text('Model: ${item.model}', style: TextStyle(fontSize: 14)),
+              Text(
+                'Model: ${item.item}',
+                style: TextStyle(
+                  fontSize: Responsive.isMobileSmall(context)
+                      ? 13
+                      : Responsive.isMobileMedium(context) ||
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 18,
+                ),
+              ),
               SizedBox(height: 16),
               Text(
                 'Choose an action:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: Responsive.isMobileSmall(context)
+                      ? 13
+                      : Responsive.isMobileMedium(context) ||
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 18,
+                ),
               ),
             ],
           ),
@@ -214,20 +300,34 @@ class _NetsuiteVerificationResultsScreenState
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Please scan the barcode for: ${item.model}'),
-                    backgroundColor: Colors.blue,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
+
+                Navigator.pop(context, deviceList);
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Please scan the barcode for: ${item.item}',
+                      ),
+                      backgroundColor: Colors.blue,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
               },
               child: Text(
                 'Rescan',
                 style: TextStyle(
                   color: actionBtnColor,
                   fontWeight: FontWeight.w600,
+                  fontSize: Responsive.isMobileSmall(context)
+                      ? 13
+                      : Responsive.isMobileMedium(context) ||
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 18,
                 ),
               ),
             ),
@@ -241,6 +341,14 @@ class _NetsuiteVerificationResultsScreenState
                 style: TextStyle(
                   color: actionBtnColor,
                   fontWeight: FontWeight.w600,
+                  fontSize: Responsive.isMobileSmall(context)
+                      ? 13
+                      : Responsive.isMobileMedium(context) ||
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 18,
                 ),
               ),
             ),
@@ -251,6 +359,14 @@ class _NetsuiteVerificationResultsScreenState
                 style: TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.w600,
+                  fontSize: Responsive.isMobileSmall(context)
+                      ? 13
+                      : Responsive.isMobileMedium(context) ||
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 18,
                 ),
               ),
             ),
@@ -260,12 +376,17 @@ class _NetsuiteVerificationResultsScreenState
     );
   }
 
-  void _showNonSerializedItemDialog(NetsuiteDeviceItem item) {
+  void _showQuantityUpdateDialogForNZ(NetsuiteDeviceItem item) {
+    TextEditingController quantityController = TextEditingController();
     TextEditingController varianceReasonController = TextEditingController();
+
     bool imagesCaptured = false;
     List<File> localAttachedImages = [];
+    bool isValidQuantity = false;
     String? selectedVarianceReason;
+    String? quantityError;
 
+    // Function to show full-screen image
     void _showFullScreenImage(File imageFile) {
       FocusScope.of(context).unfocus();
 
@@ -299,7 +420,45 @@ class _NetsuiteVerificationResultsScreenState
                         Navigator.pop(context);
                         FocusScope.of(context).unfocus();
                       },
-                      icon: Icon(Icons.close, color: Colors.white, size: 24),
+                      icon: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size:
+                            Responsive.isMobileSmall(context) ||
+                                Responsive.isMobileMedium(context) ||
+                                Responsive.isMobileLarge(context)
+                            ? 24
+                            : Responsive.isTabletPortrait(context)
+                            ? 30
+                            : 30,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 40,
+                  left: 20,
+                  right: 20,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Tap and drag to pan • Pinch to zoom',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: Responsive.isMobileSmall(context)
+                            ? 13
+                            : Responsive.isMobileMedium(context) ||
+                                  Responsive.isMobileLarge(context)
+                            ? 14
+                            : Responsive.isTabletPortrait(context)
+                            ? 18
+                            : 18,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
@@ -307,7 +466,9 @@ class _NetsuiteVerificationResultsScreenState
             ),
           );
         },
-      );
+      ).then((_) {
+        FocusScope.of(context).unfocus();
+      });
     }
 
     showDialog(
@@ -315,219 +476,459 @@ class _NetsuiteVerificationResultsScreenState
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            bool hasVarianceReason =
-                selectedVarianceReason != null &&
-                selectedVarianceReason!.isNotEmpty;
+            final enteredText = quantityController.text.trim();
+            final enteredQuantity = int.tryParse(enteredText);
+
+            // ✅ FIXED LOGIC: Determine when variance reason is needed
+            final needsVarianceReason =
+                enteredQuantity != null &&
+                isValidQuantity &&
+                enteredQuantity != item.quantity;
+
+            // ✅ FIXED LOGIC: Photo is only allowed when quantity > 0
+            final canTakePhoto = isValidQuantity && enteredQuantity! > 0;
+
+            // ✅ FIXED LOGIC: Enable Update button based on conditions
+            final canUpdate =
+                isValidQuantity &&
+                enteredQuantity != null &&
+                // If quantity is 0, must have variance reason (no photo needed)
+                (enteredQuantity == 0
+                    ? (selectedVarianceReason != null &&
+                          selectedVarianceReason!.trim().isNotEmpty)
+                    : // If quantity > 0 and matches total, only photo needed
+                      enteredQuantity == item.quantity
+                    ? imagesCaptured
+                    : // If quantity > 0 but doesn't match, need both photo and variance reason
+                      imagesCaptured &&
+                          selectedVarianceReason != null &&
+                          selectedVarianceReason!.trim().isNotEmpty);
 
             return AlertDialog(
-              title: Text('Non-Serialized Item Verification'),
+              title: Text(
+                'Update Verified Quantity',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Item Code: ${item.itemCode}',
-                      style: TextStyle(fontSize: 14),
+                      'Model: ${item.item}',
+                      style: TextStyle(
+                        fontSize: Responsive.isMobileSmall(context)
+                            ? 13
+                            : Responsive.isMobileMedium(context) ||
+                                  Responsive.isMobileLarge(context)
+                            ? 14
+                            : Responsive.isTabletPortrait(context)
+                            ? 18
+                            : 18,
+                      ),
                     ),
                     SizedBox(height: 5),
                     Text(
-                      'Number: ${item.number ?? "N/A"}',
-                      style: TextStyle(fontSize: 14),
+                      'Total Quantity: ${item.quantity}',
+                      style: TextStyle(
+                        fontSize: Responsive.isMobileSmall(context)
+                            ? 13
+                            : Responsive.isMobileMedium(context) ||
+                                  Responsive.isMobileLarge(context)
+                            ? 14
+                            : Responsive.isTabletPortrait(context)
+                            ? 18
+                            : 18,
+                      ),
                     ),
                     SizedBox(height: 5),
                     Text(
-                      'Model: ${item.model}',
-                      style: TextStyle(fontSize: 14),
+                      'Currently Verified: ${item.quantityVerified}',
+                      style: TextStyle(
+                        fontSize: Responsive.isMobileSmall(context)
+                            ? 13
+                            : Responsive.isMobileMedium(context) ||
+                                  Responsive.isMobileLarge(context)
+                            ? 14
+                            : Responsive.isTabletPortrait(context)
+                            ? 18
+                            : 18,
+                      ),
                     ),
                     SizedBox(height: 20),
-                    Text(
-                      'Variance Reason (Optional)',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 8),
                     TextField(
-                      controller: varianceReasonController,
+                      controller: quantityController,
+                      keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        floatingLabelBehavior: FloatingLabelBehavior.never,
-                        labelText: 'Enter variance reason',
-                        labelStyle: TextStyle(color: Colors.grey),
-                        border: OutlineInputBorder(),
-                        hintText: 'e.g., Item not available, Wrong count, etc.',
-                        hintStyle: TextStyle(color: Colors.grey),
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        labelText: 'Verified Quantity',
+                        labelStyle: TextStyle(
+                          color: Colors.black54,
+                          fontSize: Responsive.isMobileSmall(context)
+                              ? 15
+                              : Responsive.isMobileMedium(context) ||
+                                    Responsive.isMobileLarge(context)
+                              ? 16
+                              : Responsive.isTabletPortrait(context)
+                              ? 20
+                              : 20,
+                        ),
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: quantityError != null
+                                ? Colors.red
+                                : Colors.grey,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: quantityError != null
+                                ? Colors.red
+                                : Colors.black54,
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: quantityError != null
+                                ? Colors.red
+                                : Colors.grey,
+                          ),
+                        ),
+                        hintText: 'Enter quantity (0 to ${item.quantity})',
+                        hintStyle: TextStyle(
+                          color: Colors.grey,
+                          fontSize: Responsive.isMobileSmall(context)
+                              ? 13
+                              : Responsive.isMobileMedium(context) ||
+                                    Responsive.isMobileLarge(context)
+                              ? 14
+                              : Responsive.isTabletPortrait(context)
+                              ? 18
+                              : 18,
+                        ),
+                        errorText: quantityError,
+                        errorStyle: TextStyle(
+                          color: Colors.red,
+                          fontSize: Responsive.isMobileSmall(context)
+                              ? 12
+                              : Responsive.isMobileMedium(context) ||
+                                    Responsive.isMobileLarge(context)
+                              ? 13
+                              : Responsive.isTabletPortrait(context)
+                              ? 16
+                              : 16,
+                        ),
                       ),
-                      maxLines: 2,
                       onChanged: (value) {
                         setDialogState(() {
-                          selectedVarianceReason = value.trim().isEmpty
-                              ? null
-                              : value;
+                          final newQuantity = int.tryParse(value.trim());
+
+                          // Validate and set error messages
+                          if (value.trim().isEmpty) {
+                            quantityError = null;
+                            isValidQuantity = false;
+                          } else if (newQuantity == null) {
+                            quantityError = 'Please enter a valid number';
+                            isValidQuantity = false;
+                          } else if (newQuantity < 0) {
+                            quantityError = 'Quantity cannot be negative';
+                            isValidQuantity = false;
+                          } else if (newQuantity > item.quantity!) {
+                            quantityError =
+                                'Cannot exceed total quantity (${item.quantity})';
+                            isValidQuantity = false;
+                          } else {
+                            quantityError = null;
+                            isValidQuantity = true;
+                          }
+
+                          // Reset variance reason and images when quantity changes
+                          selectedVarianceReason = null;
+                          varianceReasonController.clear();
+                          localAttachedImages.clear();
+                          imagesCaptured = false;
                         });
                       },
                     ),
                     SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Text(
-                          'Attach Photo',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          try {
-                            final XFile? photo = await _picker.pickImage(
-                              source: ImageSource.camera,
-                              imageQuality: 80,
-                              maxWidth: 1024,
-                              maxHeight: 1024,
-                            );
 
-                            if (photo != null) {
-                              setDialogState(() {
-                                localAttachedImages.add(File(photo.path));
-                                imagesCaptured = true;
-                              });
-                            }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error taking picture: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        icon: Icon(
-                          Icons.camera_alt,
-                          color: Colors.green,
-                          size: 24,
-                        ),
-                        label: Text(
-                          'Take Photo',
-                          style: TextStyle(color: Colors.green, fontSize: 14),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.green),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: 12),
+                    // ✅ Show variance reason when needed (quantity != total quantity)
+                    if (needsVarianceReason) ...[
+                      Text(
+                        'Reason for Variance *',
+                        style: TextStyle(
+                          fontSize: Responsive.isMobileSmall(context)
+                              ? 15
+                              : Responsive.isMobileMedium(context) ||
+                                    Responsive.isMobileLarge(context)
+                              ? 16
+                              : Responsive.isTabletPortrait(context)
+                              ? 22
+                              : 22,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ),
-                    SizedBox(height: 12),
-                    if (imagesCaptured) ...[
+                      SizedBox(height: 8),
+                      TextField(
+                        controller: varianceReasonController,
+                        decoration: InputDecoration(
+                          floatingLabelBehavior: FloatingLabelBehavior.never,
+                          labelText: 'Enter variance reason',
+                          labelStyle: TextStyle(color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.red.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.black54,
+                              width: 1,
+                            ),
+                          ),
+                          hintText: enteredQuantity == 0
+                              ? 'e.g., All items damaged/missing'
+                              : 'e.g., Some items damaged, Missing items, etc.',
+                          hintStyle: TextStyle(color: Colors.grey),
+                        ),
+                        maxLines: 2,
+                        onChanged: (value) {
+                          setDialogState(() {
+                            selectedVarianceReason = value.trim().isEmpty
+                                ? null
+                                : value.trim();
+                          });
+                        },
+                      ),
+                      SizedBox(height: 20),
+                    ],
+
+                    // ✅ Show photo section only when quantity > 0
+                    if (canTakePhoto) ...[
                       Row(
                         children: [
-                          Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
-                            size: 18,
-                          ),
-                          SizedBox(width: 8),
                           Text(
-                            'Image Captured',
+                            'Capture Bulk Photo',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: Responsive.isMobileSmall(context)
+                                  ? 15
+                                  : Responsive.isMobileMedium(context) ||
+                                        Responsive.isMobileLarge(context)
+                                  ? 16
+                                  : Responsive.isTabletPortrait(context)
+                                  ? 22
+                                  : 22,
                               fontWeight: FontWeight.w500,
-                              color: Colors.green,
                             ),
                           ),
                         ],
                       ),
-                      SizedBox(height: 8),
+                      SizedBox(height: 12),
                       SizedBox(
-                        height: 80,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: localAttachedImages.asMap().entries.map((
-                              entry,
-                            ) {
-                              int index = entry.key;
-                              File image = entry.value;
-                              return Container(
-                                margin: EdgeInsets.only(right: 8),
-                                child: Stack(
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () => _showFullScreenImage(image),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          border: Border.all(
-                                            color: Colors.grey.shade300,
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          child: Image.file(
-                                            image,
-                                            width: 60,
-                                            height: 60,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: 2,
-                                      right: 2,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setDialogState(() {
-                                            localAttachedImages.removeAt(index);
-                                            if (localAttachedImages.isEmpty) {
-                                              imagesCaptured = false;
-                                            }
-                                          });
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.all(2),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            Icons.close,
-                                            size: 12,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            try {
+                              final XFile? photo = await _picker.pickImage(
+                                source: ImageSource.camera,
+                                imageQuality: 80,
+                                maxWidth: 1024,
+                                maxHeight: 1024,
+                              );
+
+                              if (photo != null) {
+                                setDialogState(() {
+                                  localAttachedImages.add(File(photo.path));
+                                  imagesCaptured = true;
+                                });
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error taking picture: $e'),
+                                  backgroundColor: Colors.red,
                                 ),
                               );
-                            }).toList(),
+                            }
+                          },
+                          icon: Icon(
+                            Icons.camera_alt,
+                            color: Colors.green,
+                            size:
+                                Responsive.isMobileSmall(context) ||
+                                    Responsive.isMobileMedium(context) ||
+                                    Responsive.isMobileLarge(context)
+                                ? 24
+                                : Responsive.isTabletPortrait(context)
+                                ? 30
+                                : 30,
+                          ),
+                          label: Text(
+                            'Take Photo',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontSize: Responsive.isMobileSmall(context)
+                                  ? 13
+                                  : Responsive.isMobileMedium(context) ||
+                                        Responsive.isMobileLarge(context)
+                                  ? 14
+                                  : Responsive.isTabletPortrait(context)
+                                  ? 18
+                                  : 18,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.green),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Tap image to view full screen',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                          fontStyle: FontStyle.italic,
+                      SizedBox(height: 12),
+
+                      // Show captured images
+                      if (imagesCaptured) ...[
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.green,
+                              size:
+                                  Responsive.isMobileSmall(context) ||
+                                      Responsive.isMobileMedium(context) ||
+                                      Responsive.isMobileLarge(context)
+                                  ? 18
+                                  : Responsive.isTabletPortrait(context)
+                                  ? 25
+                                  : 25,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Image Captured',
+                              style: TextStyle(
+                                fontSize: Responsive.isMobileSmall(context)
+                                    ? 13
+                                    : Responsive.isMobileMedium(context) ||
+                                          Responsive.isMobileLarge(context)
+                                    ? 14
+                                    : Responsive.isTabletPortrait(context)
+                                    ? 18
+                                    : 18,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                        SizedBox(height: 8),
+                        SizedBox(
+                          height: 80,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: localAttachedImages.asMap().entries.map((
+                                entry,
+                              ) {
+                                int index = entry.key;
+                                File image = entry.value;
+                                return Container(
+                                  margin: EdgeInsets.only(right: 8),
+                                  child: Stack(
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () =>
+                                            _showFullScreenImage(image),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.grey.shade300,
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            child: Image.file(
+                                              image,
+                                              width: 60,
+                                              height: 60,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 2,
+                                        right: 2,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setDialogState(() {
+                                              localAttachedImages.removeAt(
+                                                index,
+                                              );
+                                              if (localAttachedImages.isEmpty) {
+                                                imagesCaptured = false;
+                                              }
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: EdgeInsets.all(2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.close,
+                                              size:
+                                                  Responsive.isMobileSmall(
+                                                        context,
+                                                      ) ||
+                                                      Responsive.isMobileMedium(
+                                                        context,
+                                                      ) ||
+                                                      Responsive.isMobileLarge(
+                                                        context,
+                                                      )
+                                                  ? 12
+                                                  : Responsive.isTabletPortrait(
+                                                      context,
+                                                    )
+                                                  ? 20
+                                                  : 20,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Tap image to view full screen',
+                          style: TextStyle(
+                            fontSize: Responsive.isMobileSmall(context)
+                                ? 11
+                                : Responsive.isMobileMedium(context) ||
+                                      Responsive.isMobileLarge(context)
+                                ? 12
+                                : Responsive.isTabletPortrait(context)
+                                ? 17
+                                : 17,
+                            color: Colors.grey.shade600,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
                     ],
                   ],
                 ),
@@ -537,40 +938,76 @@ class _NetsuiteVerificationResultsScreenState
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'Cancel',
-                    style: TextStyle(color: Colors.red, fontSize: 14),
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: Responsive.isMobileSmall(context)
+                          ? 13
+                          : Responsive.isMobileMedium(context) ||
+                                Responsive.isMobileLarge(context)
+                          ? 14
+                          : Responsive.isTabletPortrait(context)
+                          ? 18
+                          : 18,
+                    ),
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: imagesCaptured
+                  onPressed: canUpdate
                       ? () {
+                          final newQuantity =
+                              int.tryParse(quantityController.text.trim()) ?? 0;
+
                           setState(() {
+                            item.quantityVerified = newQuantity;
                             item.isVerified = true;
                             item.verificationTime = DateTime.now();
-                            item.varianceReason = hasVarianceReason
-                                ? selectedVarianceReason
-                                : "Image Attached";
+
+                            if (newQuantity == 0) {
+                              // Quantity is 0: variance reason only, no photo
+                              item.varianceReason =
+                                  selectedVarianceReason ?? "Unknown";
+                            } else if (newQuantity != item.quantity) {
+                              // Quantity doesn't match: variance reason + photo
+                              item.varianceReason =
+                                  selectedVarianceReason ?? "Unknown";
+                            } else {
+                              // Quantity matches: photo only
+                              item.varianceReason = "Image Attached";
+                            }
                           });
 
                           _saveDeviceListToStorage();
                           _updateDataSource();
                           Navigator.pop(context);
+
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Item verified with image for ${item.model}',
+                                newQuantity == 0
+                                    ? 'Item marked with 0 quantity and variance reason'
+                                    : 'Quantity updated and image attached for ${item.item}',
+                                style: TextStyle(
+                                  fontSize: Responsive.isMobileSmall(context)
+                                      ? 13
+                                      : Responsive.isMobileMedium(context) ||
+                                            Responsive.isMobileLarge(context)
+                                      ? 14
+                                      : Responsive.isTabletPortrait(context)
+                                      ? 18
+                                      : 18,
+                                ),
                               ),
                               backgroundColor: Colors.green,
+                              duration: Duration(milliseconds: 1500),
                             ),
                           );
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: imagesCaptured
-                        ? actionBtnColor
-                        : Colors.grey,
+                    backgroundColor: canUpdate ? actionBtnColor : Colors.grey,
                     foregroundColor: Colors.white,
                   ),
-                  child: Text('Verify'),
+                  child: Text('Update'),
                 ),
               ],
             );
@@ -579,7 +1016,7 @@ class _NetsuiteVerificationResultsScreenState
       },
     );
   }
-
+  
   void _showVarianceReasonDialog(NetsuiteDeviceItem item) {
     TextEditingController reasonController = TextEditingController();
     String? selectedReason;
@@ -599,40 +1036,93 @@ class _NetsuiteVerificationResultsScreenState
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text('Variance Reason'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Item Code: ${item.itemCode}',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  Text(
-                    'Number: ${item.number ?? "N/A"}',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  Text('Model: ${item.model}', style: TextStyle(fontSize: 14)),
-                  SizedBox(height: 16),
-                  Text(
-                    'Select reason:',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                  SizedBox(height: 8),
-                  Container(
-                    height: 150,
-                    width: double.maxFinite,
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: commonReasons.length,
-                      itemBuilder: (context, index) {
+              title: Text(
+                'Variance Reason',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: MediaQuery.of(context).size.height * 0.3,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Item Code: ${item.itemCode}',
+                        style: TextStyle(
+                          fontSize: Responsive.isMobileSmall(context)
+                              ? 13
+                              : Responsive.isMobileMedium(context) ||
+                                    Responsive.isMobileLarge(context)
+                              ? 14
+                              : Responsive.isTabletPortrait(context)
+                              ? 18
+                              : 18,
+                        ),
+                      ),
+                      Text(
+                        'Number: ${item.serialNumber ?? "N/A"}',
+                        style: TextStyle(
+                          fontSize: Responsive.isMobileSmall(context)
+                              ? 13
+                              : Responsive.isMobileMedium(context) ||
+                                    Responsive.isMobileLarge(context)
+                              ? 14
+                              : Responsive.isTabletPortrait(context)
+                              ? 18
+                              : 18,
+                        ),
+                      ),
+                      Text(
+                        'Model: ${item.item}',
+                        style: TextStyle(
+                          fontSize: Responsive.isMobileSmall(context)
+                              ? 13
+                              : Responsive.isMobileMedium(context) ||
+                                    Responsive.isMobileLarge(context)
+                              ? 14
+                              : Responsive.isTabletPortrait(context)
+                              ? 18
+                              : 18,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Select reason:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: Responsive.isMobileSmall(context)
+                              ? 13
+                              : Responsive.isMobileMedium(context) ||
+                                    Responsive.isMobileLarge(context)
+                              ? 14
+                              : Responsive.isTabletPortrait(context)
+                              ? 18
+                              : 18,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      // Radio buttons list
+                      ...commonReasons.map((reason) {
                         return RadioListTile<String>(
                           activeColor: actionBtnColor,
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
                           title: Text(
-                            commonReasons[index],
-                            style: TextStyle(fontSize: 14),
+                            reason,
+                            style: TextStyle(
+                              fontSize: Responsive.isMobileSmall(context)
+                                  ? 13
+                                  : Responsive.isMobileMedium(context) ||
+                                        Responsive.isMobileLarge(context)
+                                  ? 14
+                                  : Responsive.isTabletPortrait(context)
+                                  ? 18
+                                  : 18,
+                            ),
                           ),
-                          value: commonReasons[index],
+                          value: reason,
                           groupValue: selectedReason,
                           onChanged: (value) {
                             setDialogState(() {
@@ -645,26 +1135,78 @@ class _NetsuiteVerificationResultsScreenState
                             });
                           },
                         );
-                      },
-                    ),
+                      }).toList(),
+                      if (selectedReason == 'Other') ...[
+                        SizedBox(height: 8),
+                        TextField(
+                          controller: reasonController,
+                          autofocus: true,
+                          decoration: InputDecoration(
+                            hintText: 'Enter custom reason...',
+                            hintStyle: TextStyle(
+                              fontSize: Responsive.isMobileSmall(context)
+                                  ? 13
+                                  : Responsive.isMobileMedium(context) ||
+                                        Responsive.isMobileLarge(context)
+                                  ? 14
+                                  : Responsive.isTabletPortrait(context)
+                                  ? 18
+                                  : 18,
+                              color: Colors.grey,
+                            ),
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: actionBtnColor,
+                                width: 1,
+                              ),
+                            ),
+                          ),
+                          maxLines: 2,
+                          onChanged: (value) {
+                            // THIS IS THE KEY FIX - Update the dialog state when typing
+                            setDialogState(() {
+                              // This will trigger rebuild and enable/disable Submit button
+                            });
+
+                            // Scroll to bottom when user starts typing
+                            Future.delayed(Duration(milliseconds: 100), () {
+                              if (context.mounted) {
+                                Scrollable.ensureVisible(
+                                  context,
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.easeOut,
+                                );
+                              }
+                            });
+                          },
+                        ),
+                        SizedBox(height: 20),
+                      ],
+                    ],
                   ),
-                  if (selectedReason == 'Other')
-                    TextField(
-                      controller: reasonController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter custom reason...',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                    ),
-                ],
+                ),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'Cancel',
-                    style: TextStyle(color: Colors.red, fontSize: 14),
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: Responsive.isMobileSmall(context)
+                          ? 13
+                          : Responsive.isMobileMedium(context) ||
+                                Responsive.isMobileLarge(context)
+                          ? 14
+                          : Responsive.isTabletPortrait(context)
+                          ? 18
+                          : 18,
+                    ),
                   ),
                 ),
                 ElevatedButton(
@@ -687,10 +1229,10 @@ class _NetsuiteVerificationResultsScreenState
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Variance reason added and item verified for ${item.model}',
+                                'Variance reason added and item verified for ${item.item}',
                               ),
                               backgroundColor: Colors.green,
-                              duration: Duration(seconds: 2),
+                              duration: Duration(milliseconds: 1500),
                             ),
                           );
                         }
@@ -723,17 +1265,39 @@ class _NetsuiteVerificationResultsScreenState
         return false;
       },
       child: Scaffold(
+        // key: _scaffoldKey,
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           backgroundColor: appbarBgColor,
-          toolbarHeight: 40,
+          toolbarHeight:
+              Responsive.isMobileSmall(context) ||
+                  Responsive.isMobileMedium(context) ||
+                  Responsive.isMobileLarge(context)
+              ? 40
+              : Responsive.isTabletPortrait(context)
+              ? 80
+              : 90,
           automaticallyImplyLeading: false,
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               SizedBox(
-                width: 90.0,
-                height: 40.0,
+                width:
+                    Responsive.isMobileSmall(context) ||
+                        Responsive.isMobileMedium(context) ||
+                        Responsive.isMobileLarge(context)
+                    ? 90.0
+                    : Responsive.isTabletPortrait(context)
+                    ? 150
+                    : 170,
+                height:
+                    Responsive.isMobileSmall(context) ||
+                        Responsive.isMobileMedium(context) ||
+                        Responsive.isMobileLarge(context)
+                    ? 40.0
+                    : Responsive.isTabletPortrait(context)
+                    ? 120
+                    : 100,
                 child: Image.asset(
                   'assets/images/iCheck_logo_2024.png',
                   fit: BoxFit.contain,
@@ -741,8 +1305,22 @@ class _NetsuiteVerificationResultsScreenState
               ),
               SizedBox(width: size.width * 0.25),
               SizedBox(
-                width: 90.0,
-                height: 40.0,
+                width:
+                    Responsive.isMobileSmall(context) ||
+                        Responsive.isMobileMedium(context) ||
+                        Responsive.isMobileLarge(context)
+                    ? 90.0
+                    : Responsive.isTabletPortrait(context)
+                    ? 150
+                    : 170,
+                height:
+                    Responsive.isMobileSmall(context) ||
+                        Responsive.isMobileMedium(context) ||
+                        Responsive.isMobileLarge(context)
+                    ? 40.0
+                    : Responsive.isTabletPortrait(context)
+                    ? 120
+                    : 100,
                 child:
                     userObj != null && userObj!['CompanyProfileImage'] != null
                     ? CachedNetworkImage(
@@ -761,13 +1339,33 @@ class _NetsuiteVerificationResultsScreenState
               itemBuilder: (BuildContext context) {
                 return _menuOptions.map((String choice) {
                   return PopupMenuItem<String>(
-                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                    padding: EdgeInsets.symmetric(
+                      horizontal:
+                          Responsive.isMobileSmall(context) ||
+                              Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                          ? 15
+                          : 20,
+                      vertical:
+                          Responsive.isMobileSmall(context) ||
+                              Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                          ? 5
+                          : 10,
+                    ),
                     value: choice,
                     child: Text(
                       choice,
                       style: TextStyle(
                         fontWeight: FontWeight.w400,
-                        fontSize: 15,
+                        fontSize: Responsive.isMobileSmall(context)
+                            ? 15
+                            : Responsive.isMobileMedium(context) ||
+                                  Responsive.isMobileLarge(context)
+                            ? 17
+                            : Responsive.isTabletPortrait(context)
+                            ? 25
+                            : 25,
                       ),
                     ),
                   );
@@ -776,7 +1374,7 @@ class _NetsuiteVerificationResultsScreenState
             ),
           ],
         ),
-        backgroundColor: Colors.grey[50],
+        backgroundColor: appBgColor,
         body: SafeArea(
           child: Column(
             children: [
@@ -815,7 +1413,14 @@ class _NetsuiteVerificationResultsScreenState
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: screenHeadingColor,
-                          fontSize: 22,
+                          fontSize: Responsive.isMobileSmall(context)
+                              ? 20
+                              : Responsive.isMobileMedium(context) ||
+                                    Responsive.isMobileLarge(context)
+                              ? 22
+                              : Responsive.isTabletPortrait(context)
+                              ? 27
+                              : 28,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -842,17 +1447,43 @@ class _NetsuiteVerificationResultsScreenState
                               Icon(
                                 Icons.check_circle,
                                 color: Colors.green,
-                                size: 20,
+                                size:
+                                    Responsive.isMobileSmall(context) ||
+                                        Responsive.isMobileMedium(context) ||
+                                        Responsive.isMobileLarge(context)
+                                    ? 20
+                                    : Responsive.isTabletPortrait(context)
+                                    ? 30
+                                    : 30,
                               ),
                               SizedBox(height: 4),
                               Text(
                                 '$verifiedCount',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: Responsive.isMobileSmall(context)
+                                      ? 15
+                                      : Responsive.isMobileMedium(context) ||
+                                            Responsive.isMobileLarge(context)
+                                      ? 16
+                                      : Responsive.isTabletPortrait(context)
+                                      ? 22
+                                      : 22,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              Text('Verified', style: TextStyle(fontSize: 10)),
+                              Text(
+                                'Verified',
+                                style: TextStyle(
+                                  fontSize:
+                                      Responsive.isMobileSmall(context) ||
+                                          Responsive.isMobileMedium(context) ||
+                                          Responsive.isMobileLarge(context)
+                                      ? 10
+                                      : Responsive.isTabletPortrait(context)
+                                      ? 15
+                                      : 15,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -872,13 +1503,29 @@ class _NetsuiteVerificationResultsScreenState
                               Text(
                                 '${totalCount - verifiedCount}',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: Responsive.isMobileSmall(context)
+                                      ? 15
+                                      : Responsive.isMobileMedium(context) ||
+                                            Responsive.isMobileLarge(context)
+                                      ? 16
+                                      : Responsive.isTabletPortrait(context)
+                                      ? 22
+                                      : 22,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
                                 'Unverified',
-                                style: TextStyle(fontSize: 10),
+                                style: TextStyle(
+                                  fontSize:
+                                      Responsive.isMobileSmall(context) ||
+                                          Responsive.isMobileMedium(context) ||
+                                          Responsive.isMobileLarge(context)
+                                      ? 10
+                                      : Responsive.isTabletPortrait(context)
+                                      ? 15
+                                      : 15,
+                                ),
                               ),
                             ],
                           ),
@@ -903,11 +1550,30 @@ class _NetsuiteVerificationResultsScreenState
                               Text(
                                 '$totalCount',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: Responsive.isMobileSmall(context)
+                                      ? 15
+                                      : Responsive.isMobileMedium(context) ||
+                                            Responsive.isMobileLarge(context)
+                                      ? 16
+                                      : Responsive.isTabletPortrait(context)
+                                      ? 22
+                                      : 22,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              Text('Total', style: TextStyle(fontSize: 10)),
+                              Text(
+                                'Total',
+                                style: TextStyle(
+                                  fontSize: Responsive.isMobileSmall(context)
+                                      ? 9
+                                      : Responsive.isMobileMedium(context) ||
+                                            Responsive.isMobileLarge(context)
+                                      ? 10
+                                      : Responsive.isTabletPortrait(context)
+                                      ? 16
+                                      : 16,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1228,31 +1894,31 @@ class _NetsuiteVerificationResultsScreenState
                                               ),
                                             ),
                                           ),
-                                          DataColumn(
-                                            label: Text(
-                                              'Type',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize:
-                                                    Responsive.isMobileSmall(
-                                                      context,
-                                                    )
-                                                    ? 11
-                                                    : Responsive.isMobileMedium(
-                                                            context,
-                                                          ) ||
-                                                          Responsive.isMobileLarge(
-                                                            context,
-                                                          )
-                                                    ? 12
-                                                    : Responsive.isTabletPortrait(
-                                                        context,
-                                                      )
-                                                    ? 18
-                                                    : 18,
-                                              ),
-                                            ),
-                                          ),
+                                          // DataColumn(
+                                          //   label: Text(
+                                          //     'Type',
+                                          //     style: TextStyle(
+                                          //       fontWeight: FontWeight.bold,
+                                          //       fontSize:
+                                          //           Responsive.isMobileSmall(
+                                          //             context,
+                                          //           )
+                                          //           ? 11
+                                          //           : Responsive.isMobileMedium(
+                                          //                   context,
+                                          //                 ) ||
+                                          //                 Responsive.isMobileLarge(
+                                          //                   context,
+                                          //                 )
+                                          //           ? 12
+                                          //           : Responsive.isTabletPortrait(
+                                          //               context,
+                                          //             )
+                                          //           ? 18
+                                          //           : 18,
+                                          //     ),
+                                          //   ),
+                                          // ),
                                           DataColumn(
                                             label: Text(
                                               'Verify\nStatus',
@@ -1345,7 +2011,14 @@ class _NetsuiteVerificationResultsScreenState
                           ? 'Submit Verification Report'
                           : 'Submit Verification Report (${totalCount - verifiedCount} items pending)',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: Responsive.isMobileSmall(context)
+                            ? 15
+                            : Responsive.isMobileMedium(context) ||
+                                  Responsive.isMobileLarge(context)
+                            ? 16
+                            : Responsive.isTabletPortrait(context)
+                            ? 22
+                            : 22,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
@@ -1363,121 +2036,407 @@ class _NetsuiteVerificationResultsScreenState
 
   void _showSubmissionDialog() {
     final TextEditingController _commentsController = TextEditingController();
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Submit Verification Report',
-            style: TextStyle(fontSize: 20),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Summary:',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return WillPopScope(
+              onWillPop: () async =>
+                  !isSubmitting, // Prevent back button during submission
+              child: AlertDialog(
+                // backgroundColor: Colors.white,
+                title: Text(
+                  'Submit Verification Report',
+                  style: TextStyle(fontWeight: FontWeight.w500),
                 ),
-                SizedBox(height: 8),
-                Text(
-                  '• Verified: $verifiedCount items',
-                  style: TextStyle(fontSize: 14),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  '• Unverified: ${totalCount - verifiedCount} items',
-                  style: TextStyle(fontSize: 14),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  '• Serialized: $serializedCount items',
-                  style: TextStyle(fontSize: 14),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  '• Non-serialized: $nonSerializedCount items',
-                  style: TextStyle(fontSize: 14),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  '• Total: $totalCount items',
-                  style: TextStyle(fontSize: 14),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Additional Notes',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                ),
-                SizedBox(height: 8),
-                TextField(
-                  controller: _commentsController,
-                  maxLines: 3,
-                  style: TextStyle(fontSize: 16),
-                  decoration: InputDecoration(
-                    floatingLabelBehavior: FloatingLabelBehavior.never,
-                    labelStyle: TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w400,
-                      fontSize: 15,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    hintText: "Enter any extra notes here...",
-                  ),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Are you sure you want to submit this verification report?',
-                  style: TextStyle(color: Colors.black, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: Colors.red, fontSize: 15),
+                content: isSubmitting
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(color: actionBtnColor),
+                          SizedBox(height: 16),
+                          Text(
+                            'Generating report and opening email...',
+                            style: TextStyle(
+                              fontSize: Responsive.isMobileSmall(context)
+                                  ? 13
+                                  : Responsive.isMobileMedium(context) ||
+                                        Responsive.isMobileLarge(context)
+                                  ? 14
+                                  : Responsive.isTabletPortrait(context)
+                                  ? 18
+                                  : 18,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      )
+                    : SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Summary:',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                                fontSize: Responsive.isMobileSmall(context)
+                                    ? 13
+                                    : Responsive.isMobileMedium(context) ||
+                                          Responsive.isMobileLarge(context)
+                                    ? 14
+                                    : Responsive.isTabletPortrait(context)
+                                    ? 18
+                                    : 18,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              '• Verified: $verifiedCount items',
+                              style: TextStyle(
+                                fontSize: Responsive.isMobileSmall(context)
+                                    ? 13
+                                    : Responsive.isMobileMedium(context) ||
+                                          Responsive.isMobileLarge(context)
+                                    ? 14
+                                    : Responsive.isTabletPortrait(context)
+                                    ? 18
+                                    : 18,
+                              ),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              '• Unverified: ${totalCount - verifiedCount} items',
+                              style: TextStyle(
+                                fontSize: Responsive.isMobileSmall(context)
+                                    ? 13
+                                    : Responsive.isMobileMedium(context) ||
+                                          Responsive.isMobileLarge(context)
+                                    ? 14
+                                    : Responsive.isTabletPortrait(context)
+                                    ? 18
+                                    : 18,
+                              ),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              '• Serialized: $serializedCount items',
+                              style: TextStyle(
+                                fontSize: Responsive.isMobileSmall(context)
+                                    ? 13
+                                    : Responsive.isMobileMedium(context) ||
+                                          Responsive.isMobileLarge(context)
+                                    ? 14
+                                    : Responsive.isTabletPortrait(context)
+                                    ? 18
+                                    : 18,
+                              ),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              '• Non-serialized: $nonSerializedCount items',
+                              style: TextStyle(
+                                fontSize: Responsive.isMobileSmall(context)
+                                    ? 13
+                                    : Responsive.isMobileMedium(context) ||
+                                          Responsive.isMobileLarge(context)
+                                    ? 14
+                                    : Responsive.isTabletPortrait(context)
+                                    ? 18
+                                    : 18,
+                              ),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              '• Total: $totalCount items',
+                              style: TextStyle(
+                                fontSize: Responsive.isMobileSmall(context)
+                                    ? 13
+                                    : Responsive.isMobileMedium(context) ||
+                                          Responsive.isMobileLarge(context)
+                                    ? 14
+                                    : Responsive.isTabletPortrait(context)
+                                    ? 18
+                                    : 18,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            Container(
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.grey[400]!),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.email,
+                                    color: Colors.blue.shade700,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Email will be sent to:',
+                                          style: TextStyle(
+                                            fontSize:
+                                                Responsive.isMobileSmall(
+                                                  context,
+                                                )
+                                                ? 11
+                                                : Responsive.isMobileMedium(
+                                                        context,
+                                                      ) ||
+                                                      Responsive.isMobileLarge(
+                                                        context,
+                                                      )
+                                                ? 12
+                                                : Responsive.isTabletPortrait(
+                                                    context,
+                                                  )
+                                                ? 17
+                                                : 17,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                        Text(
+                                          VerificationReportService
+                                              .RECIPIENT_EMAIL,
+                                          style: TextStyle(
+                                            fontSize:
+                                                Responsive.isMobileSmall(
+                                                  context,
+                                                )
+                                                ? 12
+                                                : Responsive.isMobileMedium(
+                                                        context,
+                                                      ) ||
+                                                      Responsive.isMobileLarge(
+                                                        context,
+                                                      )
+                                                ? 13
+                                                : Responsive.isTabletPortrait(
+                                                    context,
+                                                  )
+                                                ? 18
+                                                : 18,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'Additional Notes',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                                fontSize: Responsive.isMobileSmall(context)
+                                    ? 13
+                                    : Responsive.isMobileMedium(context) ||
+                                          Responsive.isMobileLarge(context)
+                                    ? 14
+                                    : Responsive.isTabletPortrait(context)
+                                    ? 18
+                                    : 18,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            TextField(
+                              controller: _commentsController,
+                              maxLines: 3,
+                              style: TextStyle(fontSize: 16),
+                              decoration: InputDecoration(
+                                floatingLabelBehavior:
+                                    FloatingLabelBehavior.never,
+                                labelStyle: TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                hintStyle: TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: Responsive.isMobileSmall(context)
+                                      ? 14
+                                      : Responsive.isMobileMedium(context) ||
+                                            Responsive.isMobileLarge(context)
+                                      ? 15
+                                      : Responsive.isTabletPortrait(context)
+                                      ? 20
+                                      : 20,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                hintText: "Enter any extra notes here...",
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'An Excel report will be generated and your email app will open with the report attached.',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: Responsive.isMobileSmall(context)
+                                    ? 12
+                                    : Responsive.isMobileMedium(context) ||
+                                          Responsive.isMobileLarge(context)
+                                    ? 13
+                                    : Responsive.isTabletPortrait(context)
+                                    ? 17
+                                    : 17,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                actions: isSubmitting
+                    ? []
+                    : [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(color: Colors.red, fontSize: 15),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            // Start loading state
+                            setDialogState(() {
+                              isSubmitting = true;
+                            });
+
+                            try {
+                              // Generate Excel report
+                              File excelFile =
+                                  await VerificationReportService.generateExcelReport(
+                                    deviceList: deviceList,
+                                    locationName: widget.location ?? 'Unknown',
+                                    additionalNotes:
+                                        _commentsController.text.trim().isEmpty
+                                        ? null
+                                        : _commentsController.text.trim(),
+                                    username: userObj != null
+                                        ? userObj!["FirstName"] +
+                                              " " +
+                                              userObj!["LastName"]
+                                        : 'Unknown',
+                                  );
+
+                              // ✨ NEW: Store submitted device identifiers
+                              List<String> submittedIdentifiers = deviceList
+                                  .where(
+                                    (device) =>
+                                        device.isVerified &&
+                                        device.isSerialized,
+                                  )
+                                  .map(
+                                    (device) =>
+                                        device.scannableIdentifier ?? '',
+                                  )
+                                  .where((id) => id.isNotEmpty)
+                                  .toList();
+
+                              await SubmittedDevicesService.storeSubmittedDevices(
+                                deviceIdentifiers: submittedIdentifiers,
+                                locationId: widget.locationId ?? '',
+                                locationDescription:
+                                    widget.location ?? 'Unknown',
+                                userId:
+                                    userObj != null && userObj!['id'] != null
+                                    ? userObj!['id'].toString()
+                                    : '',
+                              );
+
+                              _reportSubmitted = true;
+
+                              // Close the dialog BEFORE opening email
+                              if (Navigator.canPop(dialogContext)) {
+                                Navigator.pop(dialogContext);
+                              }
+
+                              await Future.delayed(Duration(milliseconds: 300));
+
+                              await VerificationReportService.sendVerificationEmail(
+                                excelFile: excelFile,
+                                locationDescription:
+                                    widget.location ?? 'Unknown',
+                                verifiedCount: verifiedCount,
+                                totalCount: totalCount,
+                                username: userObj != null
+                                    ? userObj!["FirstName"] +
+                                          " " +
+                                          userObj!["LastName"]
+                                    : 'Unknown',
+                                additionalNotes:
+                                    _commentsController.text.trim().isEmpty
+                                    ? null
+                                    : _commentsController.text.trim(),
+                              );
+
+                              // This code runs when email app is opened
+                              // The app is now in background, waiting for user action
+                            } catch (e) {
+                              // Reset flag on error
+                              _reportSubmitted = false;
+
+                              // Close dialog if still open
+                              if (Navigator.canPop(dialogContext)) {
+                                Navigator.pop(dialogContext);
+                              }
+
+                              // Check if widget is still mounted before showing error
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        Icon(Icons.error, color: Colors.white),
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Failed to generate/send report: $e',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: Colors.red,
+                                    duration: Duration(seconds: 4),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: actionBtnColor,
+                            foregroundColor: Colors.white,
+                          ),
+
+                          child: Text('Submit', style: TextStyle(fontSize: 15)),
+                        ),
+                      ],
               ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (context) => HomeScreen(index2: widget.index),
-                  ),
-                  (route) => false,
-                );
-              },
-              child: Text('Submit', style: TextStyle(fontSize: 15)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: actionBtnColor,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -1507,11 +2466,19 @@ class DeviceDataSource extends DataTableSource {
         DataCell(
           Container(
             width: 80,
-            child: item.number != null
+            // child: item.number != null
+            //     ? Text(
+            //         item.number!.length > 15
+            //             ? item.number!.substring(0, 15) + '...'
+            //             : item.number!,
+            //         style: TextStyle(fontSize: 10, fontFamily: 'monospace'),
+            //       )
+            //     : Text('N/A', style: TextStyle(fontSize: 10)),
+            child: item.isSerialized == true && item.serialNumber != null
                 ? Text(
-                    item.number!.length > 15
-                        ? item.number!.substring(0, 15) + '...'
-                        : item.number!,
+                    item.serialNumber!.length > 30
+                        ? item.serialNumber!.substring(0, 30) + '...'
+                        : item.serialNumber!,
                     style: TextStyle(fontSize: 10, fontFamily: 'monospace'),
                   )
                 : Text('N/A', style: TextStyle(fontSize: 10)),
@@ -1521,9 +2488,9 @@ class DeviceDataSource extends DataTableSource {
         // Model Cell
         DataCell(
           Container(
-            width: 90,
+            width: 100,
             child: Text(
-              item.model,
+              item.item,
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -1532,27 +2499,27 @@ class DeviceDataSource extends DataTableSource {
         ),
 
         // Type Cell
-        DataCell(
-          Container(
-            width: 50,
-            child: Text(
-              item.deviceType == 'IMEI Device'
-                  ? 'IMEI'
-                  : item.deviceType == 'Serial Number Device'
-                  ? 'Serial'
-                  : 'Bulk',
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w500,
-                color: item.deviceType == 'IMEI Device'
-                    ? Colors.blue
-                    : item.deviceType == 'Serial Number Device'
-                    ? Colors.purple
-                    : Colors.orange,
-              ),
-            ),
-          ),
-        ),
+        // DataCell(
+        //   Container(
+        //     width: 50,
+        //     child: Text(
+        //       item.deviceType == 'IMEI Device'
+        //           ? 'IMEI'
+        //           : item.deviceType == 'Serial Number Device'
+        //           ? 'Serial'
+        //           : 'Non\nSerial',
+        //       style: TextStyle(
+        //         fontSize: 9,
+        //         fontWeight: FontWeight.w500,
+        //         color: item.deviceType == 'IMEI Device'
+        //             ? Colors.blue
+        //             : item.deviceType == 'Serial Number Device'
+        //             ? Colors.purple
+        //             : Colors.orange,
+        //       ),
+        //     ),
+        //   ),
+        // ),
 
         // Status Cell
         DataCell(
@@ -1597,7 +2564,7 @@ class DeviceDataSource extends DataTableSource {
                           )
                         : IconButton(
                             icon: Icon(
-                              item.serialized
+                              item.isSerialized
                                   ? Icons.edit_document
                                   : Icons.add_box,
                               color: Colors.grey[400],

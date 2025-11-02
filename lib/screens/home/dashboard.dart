@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:stelacom_check/screens/Inventory-Recall/recall_orders_screen.dart';
 import 'package:stelacom_check/app-services/api_service.dart';
 import 'package:stelacom_check/main.dart';
-import 'package:stelacom_check/screens/Inventory-Scan/netsuite_device_verification.dart';
+import 'package:stelacom_check/screens/Inventory-Scan/netsuite_device_barcodes_scan.dart';
 import 'package:stelacom_check/screens/Visits/capture_screen.dart';
 import 'package:stelacom_check/screens/checkin-checkout/checkin_capture_screen.dart';
 import 'package:stelacom_check/screens/checkin-checkout/checkout_capture_screen.dart';
@@ -962,7 +962,7 @@ class _ModifiedDashboardState extends State<ModifiedDashboard>
             Navigator.of(context, rootNavigator: true).push(
               MaterialPageRoute(
                 builder: (context) => NetsuiteDeviceItemScanScreen(
-                  locationDescription: result.description!,
+                  locationId: result.description!,
                   index: widget.index3,
                 ),
               ),

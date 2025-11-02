@@ -1,72 +1,56 @@
 class NetsuiteDeviceItem {
-  final int id; 
-  final String itemCode; 
-  final String model; 
-  final String? number; // Serial Number or IMEI (from "Number" field)
-  final String itemCategory; 
+  final int id;
+  final String itemCode;
+  final String item;
+  final String? serialNumber;
+  final String itemCategory;
   final String location;
-  final String onHand;
-  final String available; 
+  final bool isSerialized;
   bool isVerified;
   DateTime? verificationTime;
-  String? varianceReason; 
+  String? varianceReason;
+  int quantityVerified;
+  final int? quantity;
 
   NetsuiteDeviceItem({
     required this.id,
     required this.itemCode,
-    required this.model,
-    this.number,
+    required this.item,
+    this.serialNumber,
     required this.itemCategory,
     required this.location,
-    required this.onHand,
-    required this.available,
+    required this.isSerialized,
     this.isVerified = false,
     this.verificationTime,
     this.varianceReason,
+    this.quantityVerified = 0,
+    this.quantity,
   });
 
-  // Helper method to get the scannable identifier (Number field)
+  // Helper method to get the scannable identifier
   String? get scannableIdentifier {
-    return number; // The "Number" field contains Serial/IMEI
-  }
-
-  // Helper method to determine if item is serialized
-  bool get serialized {
-    return number != null && number!.isNotEmpty;
-  }
-
-  // Helper method to determine device type based on Number format
-  String get deviceType {
-    if (number == null || number!.isEmpty) return 'Non-Serialized';
-    
-    // Check if it's likely an IMEI (15 digits)
-    if (RegExp(r'^\d{15}$').hasMatch(number!)) {
-      return 'IMEI Device';
+    // Only serialized items can be scanned
+    if (isSerialized) {
+      return serialNumber;
     }
-    
-    // Otherwise treat as Serial Number
-    return 'Serial Number Device';
-  }
-
-  // Helper method to get display identifier
-  String get displayIdentifier {
-    if (number != null && number!.isNotEmpty) {
-      if (deviceType == 'IMEI Device') {
-        return 'IMEI: $number';
-      }
-      return 'Serial: $number';
-    }
-    return 'Item Code: $itemCode';
+    return null;
   }
 
   // Helper method to check if verification is complete
   bool get isFullyVerified {
-    return isVerified;
+    if (isSerialized) {
+      return isVerified;
+    } else {
+      return quantityVerified >= (quantity ?? 0);
+    }
   }
 
   // Helper method to get verification progress
   double get verificationProgress {
-    return isVerified ? 1.0 : 0.0;
+    if (isSerialized || quantity == null || quantity == 0) {
+      return isVerified ? 1.0 : 0.0;
+    }
+    return quantityVerified / quantity!;
   }
 
   // Convert to JSON for storage
@@ -74,15 +58,16 @@ class NetsuiteDeviceItem {
     return {
       'id': id,
       'item_code': itemCode,
-      'model': model,
-      'number': number,
+      'item': item,
+      'serial_number': serialNumber,
       'item_category': itemCategory,
       'location': location,
-      'on_hand': onHand,
-      'available': available,
+      'isSerialized': isSerialized,
       'is_verified': isVerified,
       'verification_time': verificationTime?.toIso8601String(),
       'variance_reason': varianceReason,
+      'quantity': quantity,
+      'quantity_verified': quantityVerified,
     };
   }
 
@@ -91,32 +76,42 @@ class NetsuiteDeviceItem {
     return NetsuiteDeviceItem(
       id: json['id'],
       itemCode: json['item_code'],
-      model: json['model'],
-      number: json['number'],
+      item: json['item'],
+      serialNumber: json['serial_number'],
       itemCategory: json['item_category'],
       location: json['location'],
-      onHand: json['on_hand'],
-      available: json['available'],
+      isSerialized: json['isSerialized'] ?? false,
       isVerified: json['is_verified'] ?? false,
       verificationTime: json['verification_time'] != null
           ? DateTime.parse(json['verification_time'])
           : null,
       varianceReason: json['variance_reason'],
+      quantity: json['quantity'],
+      quantityVerified: json['quantity_verified'] ?? 0,
     );
   }
 
-  // Create from NetSuite API JSON format
+  // Create from NetSuite API JSON format (device_list2.json)
   factory NetsuiteDeviceItem.fromNetSuiteJson(Map<String, dynamic> json) {
+    bool isSerialized = json['Is_Serialized'] ?? false;
+
+    // Parse quantity - it comes as string from API
+    int? parsedQuantity;
+    if (!isSerialized && json['Quantity'] != null) {
+      parsedQuantity = int.tryParse(json['Quantity'].toString());
+    }
+
     return NetsuiteDeviceItem(
       id: json['id'],
-      itemCode: json['Item Code'] ?? '',
-      model: json['Item'] ?? '',
-      number: json['Number'], // This is the Serial Number or IMEI
-      itemCategory: json['(c)Item Category'] ?? '',
+      itemCode: json['Item_Code'] ?? '',
+      item: json['Item'] ?? '',
+      serialNumber: json['Serial_Number'],
+      itemCategory: json['Item_Category'] ?? '',
       location: json['Location'] ?? '',
-      onHand: json['On Hand']?.toString() ?? '0',
-      available: json['Available']?.toString() ?? '0',
-      isVerified: false, // Always start unverified
+      isSerialized: isSerialized,
+      isVerified: false,
+      quantity: parsedQuantity,
+      quantityVerified: 0,
     );
   }
 
@@ -128,30 +123,32 @@ class NetsuiteDeviceItem {
     String? number,
     String? itemCategory,
     String? location,
-    String? onHand,
-    String? available,
+    bool? serialized,
     bool? isVerified,
     DateTime? verificationTime,
     String? varianceReason,
+    int? quantity,
+    int? quantityVerified,
   }) {
     return NetsuiteDeviceItem(
       id: id ?? this.id,
       itemCode: itemCode ?? this.itemCode,
-      model: model ?? this.model,
-      number: number ?? this.number,
+      item: model ?? this.item,
+      serialNumber: number ?? this.serialNumber,
       itemCategory: itemCategory ?? this.itemCategory,
       location: location ?? this.location,
-      onHand: onHand ?? this.onHand,
-      available: available ?? this.available,
+      isSerialized: serialized ?? this.isSerialized,
       isVerified: isVerified ?? this.isVerified,
       verificationTime: verificationTime ?? this.verificationTime,
       varianceReason: varianceReason ?? this.varianceReason,
+      quantity: quantity ?? this.quantity,
+      quantityVerified: quantityVerified ?? this.quantityVerified,
     );
   }
 
   @override
   String toString() {
-    return 'NetsuiteDeviceItem(id: $id, model: $model, number: $number, isVerified: $isVerified)';
+    return 'NetsuiteDeviceItem(id: $id, item: $item, serial_number: $serialNumber, is_serialized: $isSerialized, isVerified: $isVerified, quantityVerified: $quantityVerified)';
   }
 
   @override
@@ -159,11 +156,12 @@ class NetsuiteDeviceItem {
     if (identical(this, other)) return true;
     return other is NetsuiteDeviceItem &&
         other.id == id &&
-        other.number == number;
+        other.serialNumber == serialNumber &&
+        other.isSerialized == isSerialized;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, number);
+    return Object.hash(id, serialNumber, isSerialized);
   }
 }

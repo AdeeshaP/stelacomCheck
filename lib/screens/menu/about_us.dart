@@ -11,7 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../responsive.dart';
 import '../enroll/code_verification.dart';
-// ignore: import_of_legacy_library_into_null_safe
 
 class AboutUs extends StatefulWidget {
   final int index3;
