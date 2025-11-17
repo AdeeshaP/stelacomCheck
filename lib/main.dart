@@ -1,13 +1,13 @@
 import 'dart:io';
+import 'package:get/get.dart';
+import 'package:stelacom_check/controllers/appstate_controller.dart';
 import 'package:stelacom_check/no_permisisons.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:stelacom_check/providers/appstate_provider.dart';
 import 'package:stelacom_check/screens/enroll/code_verification.dart';
 import 'package:stelacom_check/screens/home/first_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -50,6 +50,7 @@ Future<void> clearAppCache() async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await clearAppCache(); // Ensures old cache is cleared before launching app
+  Get.put(AppStateController());
 
   // await Firebase.initializeApp();
   // await FirebaseApi().initNotifications();
@@ -73,24 +74,9 @@ Future<void> main() async {
               PermissionStatus.permanentlyDenied)) {
     SharedPreferences storage = await SharedPreferences.getInstance();
 
-    runApp(
-      ChangeNotifierProvider(
-        create: (context) => AppState(),
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(primarySwatch: Colors.orange),
-          home: MyApp(storage),
-        ),
-      ),
-    );
+    runApp(MyApp(storage));
   } else {
-    runApp(
-      MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(primarySwatch: Colors.orange),
-        home: NoPermissionGranted(),
-      ),
-    );
+    runApp(NoPermissionGranted());
   }
 }
 
@@ -104,7 +90,7 @@ class MyApp extends StatelessWidget {
     bool? isGoToHomeScreen = storage.getBool('userInHomeScreen');
 
     if (employeeCode == null || employeeCode == '') {
-      return MaterialApp(
+      return GetMaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'ICheck',
         theme: ThemeData(
@@ -114,7 +100,7 @@ class MyApp extends StatelessWidget {
         home: CodeVerificationScreen(),
       );
     } else if (isGoToHomeScreen == false || isGoToHomeScreen == null) {
-      return MaterialApp(
+      return GetMaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'ICheck',
         theme: ThemeData(
@@ -124,7 +110,7 @@ class MyApp extends StatelessWidget {
         home: CodeVerificationScreen(),
       );
     } else {
-      return MaterialApp(
+      return GetMaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'ICheck',
         theme: ThemeData(
@@ -132,13 +118,6 @@ class MyApp extends StatelessWidget {
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         home: HomeScreen(index2: 0),
-        // routes: {
-        //   HomeScreen.route: (context) => HomeScreen(index2: 0),
-        //   Leaves.route: (context) => Leaves(
-        //         index3: 0,
-        //         user: null,
-        //       ),
-        // },
       );
     }
   }

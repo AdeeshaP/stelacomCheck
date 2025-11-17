@@ -13,12 +13,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:stelacom_check/app-services/api_service.dart';
 import 'package:stelacom_check/constants.dart';
 import 'package:stelacom_check/main.dart';
-import 'package:stelacom_check/providers/appstate_provider.dart';
 import 'package:stelacom_check/screens/home/first_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:jiffy/jiffy.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get/get.dart';
+import 'package:stelacom_check/controllers/appstate_controller.dart';
 
 class CheckInCapture extends StatefulWidget {
   const CheckInCapture({Key? key}) : super(key: key);
@@ -46,16 +46,16 @@ class _CheckInCaptureState extends State<CheckInCapture>
   String deviceModel = "";
   String deviceVersion = "";
   late var timer;
-  late AppState appState;
   Position? currentLocation;
   CustomPaint? customPaint;
   bool isBusy = false;
   bool _isCameraReady = false;
+  late AppStateController appState;
 
   @override
   void initState() {
     super.initState();
-    appState = Provider.of<AppState>(context, listen: false);
+    appState = Get.put(AppStateController());
 
     getSharedPrefs();
     WidgetsBinding.instance.addObserver(this);
@@ -109,7 +109,8 @@ class _CheckInCaptureState extends State<CheckInCapture>
       }
     } else if (permission == LocationPermission.deniedForever) {
       return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
+        'Location permissions are permanently denied, we cannot request permissions.',
+      );
     } else {
       currentLocation = await Geolocator.getCurrentPosition();
       await _getAddressFromCoordinated();
@@ -141,8 +142,10 @@ class _CheckInCaptureState extends State<CheckInCapture>
         _cameraIndex = 0;
       }
       _cameraController = CameraController(
-          firstCamera!, ResolutionPreset.medium,
-          enableAudio: false);
+        firstCamera!,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
       _initializeControllerFuture = _cameraController!.initialize();
 
       if (mounted) {
@@ -253,11 +256,9 @@ class _CheckInCaptureState extends State<CheckInCapture>
           message: 'Location permissions are denied.',
           onOkPressed: () {
             closeDialog(context);
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => HomeScreen(index2: 0),
-              ),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => HomeScreen(index2: 0)));
             Geolocator.requestPermission();
           },
           iconData: Icons.block,
@@ -275,11 +276,9 @@ class _CheckInCaptureState extends State<CheckInCapture>
           message: 'Location permissions are permanently denied.',
           onOkPressed: () {
             closeDialog(context);
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => HomeScreen(index2: 0),
-              ),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => HomeScreen(index2: 0)));
             Geolocator.requestPermission();
           },
           iconData: Icons.block,
@@ -292,7 +291,9 @@ class _CheckInCaptureState extends State<CheckInCapture>
 
   _getAddressFromCoordinated() async {
     List<Placemark> placemarks = await placemarkFromCoordinates(
-        currentLocation!.latitude, currentLocation!.longitude);
+      currentLocation!.latitude,
+      currentLocation!.longitude,
+    );
 
     Placemark place = placemarks[0];
 
@@ -324,8 +325,10 @@ class _CheckInCaptureState extends State<CheckInCapture>
 
   Future _onCameraSwitched(CameraDescription cameraDescription) async {
     _cameraController = CameraController(
-        cameraDescription, ResolutionPreset.medium,
-        enableAudio: false);
+      cameraDescription,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
 
     try {
       await _cameraController!.initialize();
@@ -342,35 +345,29 @@ class _CheckInCaptureState extends State<CheckInCapture>
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Consumer<AppState>(builder: (context, appState, child) {
-      return Scaffold(
-        backgroundColor: Colors.grey[50],
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight,
-                  ),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      children: [
-                        _buildHeader(context),
-                        Expanded(
-                          child: _buildFaceRecognitionArea(screenHeight),
-                        ),
-                        _buildBottomButtons(),
-                      ],
-                    ),
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    children: [
+                      _buildHeader(context),
+                      Expanded(child: _buildFaceRecognitionArea(screenHeight)),
+                      _buildBottomButtons(),
+                    ],
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
-      );
-    });
+      ),
+    );
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -412,11 +409,11 @@ class _CheckInCaptureState extends State<CheckInCapture>
                     fontSize: Responsive.isMobileSmall(context)
                         ? 20
                         : Responsive.isMobileMedium(context) ||
-                                Responsive.isMobileLarge(context)
-                            ? 24
-                            : Responsive.isTabletPortrait(context)
-                                ? 28
-                                : 30,
+                              Responsive.isMobileLarge(context)
+                        ? 24
+                        : Responsive.isTabletPortrait(context)
+                        ? 28
+                        : 30,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -462,7 +459,7 @@ class _CheckInCaptureState extends State<CheckInCapture>
               ],
             ),
           ),
-          SizedBox(height: 10)
+          SizedBox(height: 10),
         ],
       ),
     );
@@ -478,11 +475,11 @@ class _CheckInCaptureState extends State<CheckInCapture>
           size: Responsive.isMobileSmall(context)
               ? 18
               : Responsive.isMobileMedium(context) ||
-                      Responsive.isMobileLarge(context)
-                  ? 20
-                  : Responsive.isTabletPortrait(context)
-                      ? 25
-                      : 25,
+                    Responsive.isMobileLarge(context)
+              ? 20
+              : Responsive.isTabletPortrait(context)
+              ? 25
+              : 25,
         ),
         SizedBox(width: 8),
         Expanded(
@@ -496,11 +493,11 @@ class _CheckInCaptureState extends State<CheckInCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 11
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 13
-                          : Responsive.isTabletPortrait(context)
-                              ? 16
-                              : 18,
+                            Responsive.isMobileLarge(context)
+                      ? 13
+                      : Responsive.isTabletPortrait(context)
+                      ? 16
+                      : 18,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -512,11 +509,11 @@ class _CheckInCaptureState extends State<CheckInCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -536,11 +533,7 @@ class _CheckInCaptureState extends State<CheckInCapture>
           color: Colors.orange[50],
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          Icons.face,
-          size: screenHeight * 0.15,
-          color: iconColors,
-        ),
+        child: Icon(Icons.face, size: screenHeight * 0.15, color: iconColors),
       );
     }
 
@@ -550,9 +543,7 @@ class _CheckInCaptureState extends State<CheckInCapture>
       width: size,
       height: size,
       clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle),
       child: OverflowBox(
         alignment: Alignment.center,
         child: FittedBox(
@@ -596,11 +587,11 @@ class _CheckInCaptureState extends State<CheckInCapture>
               fontSize: Responsive.isMobileSmall(context)
                   ? 18
                   : Responsive.isMobileMedium(context) ||
-                          Responsive.isMobileLarge(context)
-                      ? 20
-                      : Responsive.isTabletPortrait(context)
-                          ? 22
-                          : 25,
+                        Responsive.isMobileLarge(context)
+                  ? 20
+                  : Responsive.isTabletPortrait(context)
+                  ? 22
+                  : 25,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -637,11 +628,11 @@ class _CheckInCaptureState extends State<CheckInCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -676,9 +667,7 @@ class _CheckInCaptureState extends State<CheckInCapture>
                 onTap: () {
                   // Navigator.of(context).pop();
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => HomeScreen(index2: 0),
-                    ),
+                    MaterialPageRoute(builder: (_) => HomeScreen(index2: 0)),
                   );
                 },
                 child: Container(
@@ -695,14 +684,16 @@ class _CheckInCaptureState extends State<CheckInCapture>
                       ),
                     ],
                   ),
-                  child: Icon(Icons.arrow_back,
-                      color: Colors.grey[800]!,
-                      size: Responsive.isMobileSmall(context)
-                          ? 25
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 30
-                              : 35),
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: Colors.grey[800]!,
+                    size: Responsive.isMobileSmall(context)
+                        ? 25
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 30
+                        : 35,
+                  ),
                 ),
               ),
               SizedBox(height: 5),
@@ -713,11 +704,11 @@ class _CheckInCaptureState extends State<CheckInCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -763,16 +754,18 @@ class _CheckInCaptureState extends State<CheckInCapture>
                             ),
                           ],
                         ),
-                  child: Icon(Icons.camera_alt,
-                      color: appState.locationAddress == ""
-                          ? Colors.grey[800]
-                          : Colors.white,
-                      size: Responsive.isMobileSmall(context)
-                          ? 30
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 40
-                              : 45),
+                  child: Icon(
+                    Icons.camera_alt,
+                    color: appState.locationAddress == ""
+                        ? Colors.grey[800]
+                        : Colors.white,
+                    size: Responsive.isMobileSmall(context)
+                        ? 30
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 40
+                        : 45,
+                  ),
                 ),
               ),
               SizedBox(height: 8),
@@ -785,11 +778,11 @@ class _CheckInCaptureState extends State<CheckInCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -824,14 +817,16 @@ class _CheckInCaptureState extends State<CheckInCapture>
                       ),
                     ],
                   ),
-                  child: Icon(Icons.cameraswitch_rounded,
-                      color: Colors.grey[800]!,
-                      size: Responsive.isMobileSmall(context)
-                          ? 25
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 30
-                              : 35),
+                  child: Icon(
+                    Icons.cameraswitch_rounded,
+                    color: Colors.grey[800]!,
+                    size: Responsive.isMobileSmall(context)
+                        ? 25
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 30
+                        : 35,
+                  ),
                 ),
               ),
               SizedBox(height: 5),
@@ -842,11 +837,11 @@ class _CheckInCaptureState extends State<CheckInCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w500,
                 ),
               ),

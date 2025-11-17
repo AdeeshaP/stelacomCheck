@@ -7,8 +7,6 @@ import 'package:stelacom_check/screens/menu/contact_us.dart';
 import 'package:stelacom_check/screens/menu/terms_conditions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:stelacom_check/providers/appstate_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../responsive.dart';
 
@@ -27,13 +25,11 @@ class _HelpScreenState extends State<HelpScreen> {
   Map<String, dynamic>? userObj;
   String employeeCode = "";
   String userData = "";
-  AppState appState = AppState();
   late PdfController pdfController;
 
   @override
   void initState() {
     super.initState();
-    appState = Provider.of<AppState>(context, listen: false);
     getSharedPrefs();
     loadDocument();
   }

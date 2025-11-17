@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:stelacom_check/providers/appstate_provider.dart';
+import 'package:get/get.dart';
+import 'package:stelacom_check/controllers/appstate_controller.dart';
 import 'package:stelacom_check/screens/checkin-checkout/checkout_preview_screen.dart';
 import 'package:stelacom_check/responsive.dart';
 import 'package:camera/camera.dart';
@@ -15,7 +16,6 @@ import 'package:stelacom_check/main.dart';
 import 'package:stelacom_check/screens/home/first_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:jiffy/jiffy.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../components/utils/custom_error_dialog.dart';
 import '../../components/utils/dialogs.dart';
@@ -47,7 +47,7 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
   String deviceModel = "";
   String deviceVersion = "";
   late var timer;
-  late AppState appState;
+  late AppStateController appState;
   Position? currentLocation;
   late bool servicePermission = false;
   late LocationPermission locationPermission;
@@ -59,7 +59,7 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
   @override
   void initState() {
     super.initState();
-    appState = Provider.of<AppState>(context, listen: false);
+    appState = Get.put(AppStateController());
 
     getSharedPrefs();
     WidgetsBinding.instance.addObserver(this);
@@ -114,7 +114,8 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
       }
     } else if (permission == LocationPermission.deniedForever) {
       return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
+        'Location permissions are permanently denied, we cannot request permissions.',
+      );
     } else {
       currentLocation = await Geolocator.getCurrentPosition();
       await _getAddressFromCoordinated();
@@ -195,8 +196,10 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
         _cameraIndex = 0;
       }
       _cameraController = CameraController(
-          firstCamera!, ResolutionPreset.medium,
-          enableAudio: false);
+        firstCamera!,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
       _initializeControllerFuture = _cameraController!.initialize();
 
       if (mounted) {
@@ -220,9 +223,11 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
     if (!ison) {
       await Geolocator.openLocationSettings();
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) {
-          return HomeScreen(index2: 0);
-        }),
+        MaterialPageRoute(
+          builder: (context) {
+            return HomeScreen(index2: 0);
+          },
+        ),
       );
     }
   }
@@ -241,11 +246,9 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
           message: 'Location permissions are denied.',
           onOkPressed: () {
             closeDialog(context);
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => HomeScreen(index2: 0),
-              ),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => HomeScreen(index2: 0)));
             Geolocator.requestPermission();
           },
           iconData: Icons.block,
@@ -263,11 +266,9 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
           message: 'Location permissions are permanently denied.',
           onOkPressed: () {
             closeDialog(context);
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => HomeScreen(index2: 0),
-              ),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => HomeScreen(index2: 0)));
             Geolocator.requestPermission();
           },
           iconData: Icons.block,
@@ -327,7 +328,9 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
 
   _getAddressFromCoordinated() async {
     List<Placemark> placemarks = await placemarkFromCoordinates(
-        currentLocation!.latitude, currentLocation!.longitude);
+      currentLocation!.latitude,
+      currentLocation!.longitude,
+    );
 
     Placemark place = placemarks[0];
 
@@ -359,8 +362,10 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
 
   Future _onCameraSwitched(CameraDescription cameraDescription) async {
     _cameraController = CameraController(
-        cameraDescription, ResolutionPreset.medium,
-        enableAudio: false);
+      cameraDescription,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
 
     try {
       await _cameraController!.initialize();
@@ -377,35 +382,29 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Consumer<AppState>(builder: (context, appState, child) {
-      return Scaffold(
-        backgroundColor: Colors.grey[50],
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight,
-                  ),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      children: [
-                        _buildHeader(context),
-                        Expanded(
-                          child: _buildFaceRecognitionArea(screenHeight),
-                        ),
-                        _buildBottomButtons(),
-                      ],
-                    ),
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    children: [
+                      _buildHeader(context),
+                      Expanded(child: _buildFaceRecognitionArea(screenHeight)),
+                      _buildBottomButtons(),
+                    ],
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
-      );
-    });
+      ),
+    );
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -447,11 +446,11 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
                     fontSize: Responsive.isMobileSmall(context)
                         ? 20
                         : Responsive.isMobileMedium(context) ||
-                                Responsive.isMobileLarge(context)
-                            ? 24
-                            : Responsive.isTabletPortrait(context)
-                                ? 28
-                                : 30,
+                              Responsive.isMobileLarge(context)
+                        ? 24
+                        : Responsive.isTabletPortrait(context)
+                        ? 28
+                        : 30,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -497,7 +496,7 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
               ],
             ),
           ),
-          SizedBox(height: 10)
+          SizedBox(height: 10),
         ],
       ),
     );
@@ -513,11 +512,11 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
           size: Responsive.isMobileSmall(context)
               ? 18
               : Responsive.isMobileMedium(context) ||
-                      Responsive.isMobileLarge(context)
-                  ? 20
-                  : Responsive.isTabletPortrait(context)
-                      ? 25
-                      : 25,
+                    Responsive.isMobileLarge(context)
+              ? 20
+              : Responsive.isTabletPortrait(context)
+              ? 25
+              : 25,
         ),
         SizedBox(width: 8),
         Expanded(
@@ -531,11 +530,11 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 11
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 13
-                          : Responsive.isTabletPortrait(context)
-                              ? 16
-                              : 18,
+                            Responsive.isMobileLarge(context)
+                      ? 13
+                      : Responsive.isTabletPortrait(context)
+                      ? 16
+                      : 18,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -547,11 +546,11 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -571,11 +570,7 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
           color: Colors.orange[50],
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          Icons.face,
-          size: screenHeight * 0.15,
-          color: iconColors,
-        ),
+        child: Icon(Icons.face, size: screenHeight * 0.15, color: iconColors),
       );
     }
 
@@ -585,9 +580,7 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
       width: size,
       height: size,
       clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle),
       child: OverflowBox(
         alignment: Alignment.center,
         child: FittedBox(
@@ -631,11 +624,11 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
               fontSize: Responsive.isMobileSmall(context)
                   ? 18
                   : Responsive.isMobileMedium(context) ||
-                          Responsive.isMobileLarge(context)
-                      ? 20
-                      : Responsive.isTabletPortrait(context)
-                          ? 22
-                          : 25,
+                        Responsive.isMobileLarge(context)
+                  ? 20
+                  : Responsive.isTabletPortrait(context)
+                  ? 22
+                  : 25,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -668,16 +661,17 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
                 'Position your face in the circle and ensure adequate light.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: Responsive.isMobileSmall(context)
-                        ? 12
-                        : Responsive.isMobileMedium(context) ||
-                                Responsive.isMobileLarge(context)
-                            ? 14
-                            : Responsive.isTabletPortrait(context)
-                                ? 18
-                                : 20,
-                    fontWeight: FontWeight.w500),
+                  color: Colors.black87,
+                  fontSize: Responsive.isMobileSmall(context)
+                      ? 12
+                      : Responsive.isMobileMedium(context) ||
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ),
@@ -710,9 +704,7 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
                 onTap: () {
                   // Navigator.of(context).pop();
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => HomeScreen(index2: 0),
-                    ),
+                    MaterialPageRoute(builder: (_) => HomeScreen(index2: 0)),
                   );
                 },
                 child: Container(
@@ -729,14 +721,16 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
                       ),
                     ],
                   ),
-                  child: Icon(Icons.arrow_back,
-                      color: Colors.grey[800]!,
-                      size: Responsive.isMobileSmall(context)
-                          ? 25
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 30
-                              : 35),
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: Colors.grey[800]!,
+                    size: Responsive.isMobileSmall(context)
+                        ? 25
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 30
+                        : 35,
+                  ),
                 ),
               ),
               SizedBox(height: 5),
@@ -747,11 +741,11 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -797,16 +791,18 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
                             ),
                           ],
                         ),
-                  child: Icon(Icons.camera_alt,
-                      color: appState.locationAddress == ""
-                          ? Colors.grey[800]
-                          : Colors.white,
-                      size: Responsive.isMobileSmall(context)
-                          ? 30
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 40
-                              : 45),
+                  child: Icon(
+                    Icons.camera_alt,
+                    color: appState.locationAddress == ""
+                        ? Colors.grey[800]
+                        : Colors.white,
+                    size: Responsive.isMobileSmall(context)
+                        ? 30
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 40
+                        : 45,
+                  ),
                 ),
               ),
               SizedBox(height: 8),
@@ -819,11 +815,11 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -858,14 +854,16 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
                       ),
                     ],
                   ),
-                  child: Icon(Icons.cameraswitch_rounded,
-                      color: Colors.grey[800]!,
-                      size: Responsive.isMobileSmall(context)
-                          ? 25
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 30
-                              : 35),
+                  child: Icon(
+                    Icons.cameraswitch_rounded,
+                    color: Colors.grey[800]!,
+                    size: Responsive.isMobileSmall(context)
+                        ? 25
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 30
+                        : 35,
+                  ),
                 ),
               ),
               SizedBox(height: 5),
@@ -876,11 +874,11 @@ class _CheckoutCaptureState extends State<CheckoutCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w500,
                 ),
               ),

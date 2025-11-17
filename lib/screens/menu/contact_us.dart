@@ -8,10 +8,8 @@ import 'package:stelacom_check/screens/menu/help.dart';
 import 'package:stelacom_check/screens/menu/terms_conditions.dart';
 import 'package:stelacom_check/responsive.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:stelacom_check/providers/appstate_provider.dart';
 
 class ContactUs extends StatefulWidget {
   final int index3;
@@ -31,12 +29,10 @@ class _ContactUsState extends State<ContactUs> {
   Map<String, dynamic>? userObj;
   String employeeCode = "";
   String userData = "";
-  AppState appState = AppState();
 
   @override
   void initState() {
     super.initState();
-    appState = Provider.of<AppState>(context, listen: false);
 
     getSharedPrefs();
     _markers.add(
@@ -402,14 +398,6 @@ class _ContactUsState extends State<ContactUs> {
     );
   }
 
-  Future<void> _makeHotLineCall() async {
-    String phoneNumber = "+94773420983";
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
-    await launchUrl(launchUri, mode: LaunchMode.externalNonBrowserApplication);
-  }
 
   Future<void> _makeLandLineCall() async {
     String phoneNumber = "+94117109911";

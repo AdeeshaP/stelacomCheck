@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:get/get.dart';
 import 'package:stelacom_check/components/utils/custom_error_dialog.dart';
 import 'package:stelacom_check/components/utils/dialogs.dart';
+import 'package:stelacom_check/controllers/appstate_controller.dart';
 import 'package:stelacom_check/screens/enroll/code_verification.dart';
 import 'package:stelacom_check/screens/enroll/enroll_preview_screen.dart';
 import 'package:stelacom_check/screens/enroll/enroll_user.dart';
@@ -14,12 +16,10 @@ import 'package:geolocator/geolocator.dart';
 import 'package:stelacom_check/app-services/api_service.dart';
 import 'package:stelacom_check/constants.dart';
 import 'package:stelacom_check/main.dart';
-import 'package:stelacom_check/providers/appstate_provider.dart';
 import 'package:stelacom_check/responsive.dart';
 import 'package:stelacom_check/screens/home/first_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:jiffy/jiffy.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EnrollmentCaptureScreen extends StatefulWidget {
@@ -50,7 +50,7 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
   String deviceModel = "";
   String deviceVersion = "";
   late var timer;
-  late AppState appState;
+  late AppStateController appState;
   Position? currentLocation;
   late bool servicePermission = false;
   late LocationPermission locationPermission;
@@ -60,7 +60,7 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
   @override
   void initState() {
     super.initState();
-    appState = Provider.of<AppState>(context, listen: false);
+    appState = Get.put(AppStateController());
 
     getSharedPrefs();
     WidgetsBinding.instance.addObserver(this);
@@ -114,7 +114,8 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
       }
     } else if (permission == LocationPermission.deniedForever) {
       return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
+        'Location permissions are permanently denied, we cannot request permissions.',
+      );
     } else {
       currentLocation = await Geolocator.getCurrentPosition();
       await _getAddressFromCoordinated();
@@ -146,8 +147,10 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
         _cameraIndex = 0;
       }
       _cameraController = CameraController(
-          firstCamera!, ResolutionPreset.medium,
-          enableAudio: false);
+        firstCamera!,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
       _initializeControllerFuture = _cameraController!.initialize();
 
       if (mounted) {
@@ -170,9 +173,13 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
     bool ison = await Geolocator.isLocationServiceEnabled();
     if (!ison) {
       await Geolocator.openLocationSettings();
-      Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-        return HomeScreen(index2: 0);
-      }));
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) {
+            return HomeScreen(index2: 0);
+          },
+        ),
+      );
     }
   }
 
@@ -192,9 +199,7 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
             onOkPressed: () {
               closeDialog(context);
               Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => CodeVerificationScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => CodeVerificationScreen()),
               );
               Geolocator.requestPermission();
             },
@@ -212,11 +217,9 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
           message: 'Location permissions are permanently denied.',
           onOkPressed: () {
             closeDialog(context);
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => CodeVerificationScreen(),
-              ),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => CodeVerificationScreen()));
             Geolocator.requestPermission();
           },
           iconData: Icons.block,
@@ -326,7 +329,9 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
 
   _getAddressFromCoordinated() async {
     List<Placemark> placemarks = await placemarkFromCoordinates(
-        currentLocation!.latitude, currentLocation!.longitude);
+      currentLocation!.latitude,
+      currentLocation!.longitude,
+    );
 
     Placemark place = placemarks[0];
 
@@ -358,8 +363,10 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
 
   Future _onCameraSwitched(CameraDescription cameraDescription) async {
     _cameraController = CameraController(
-        cameraDescription, ResolutionPreset.medium,
-        enableAudio: false);
+      cameraDescription,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
 
     try {
       await _cameraController!.initialize();
@@ -376,50 +383,47 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Consumer<AppState>(
-      builder: (context, appState, child) {
-        return PopScope(
-          canPop: false,
-          onPopInvokedWithResult: (didPop, dynamic2) {
-            if (didPop) {
-              return;
-            }
-            Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder: (context) => EnrollUser(),
-                ),
-                (Route<dynamic> route) => false);
-          },
-          child: Scaffold(
-            backgroundColor: Colors.grey[50],
-            body: SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: IntrinsicHeight(
-                        child: Column(
-                          children: [
-                            _buildHeader(context),
-                            Expanded(
-                              child: _buildFaceRecognitionArea(screenHeight),
-                            ),
-                            _buildBottomButtons(),
-                          ],
-                        ),
+    return Obx(() {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, dynamic2) {
+          if (didPop) {
+            return;
+          }
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => EnrollUser()),
+            (Route<dynamic> route) => false,
+          );
+        },
+        child: Scaffold(
+          backgroundColor: Colors.grey[50],
+          body: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        children: [
+                          _buildHeader(context),
+                          Expanded(
+                            child: _buildFaceRecognitionArea(screenHeight),
+                          ),
+                          _buildBottomButtons(),
+                        ],
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -445,9 +449,7 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                 onPressed: () {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => EnrollUser(),
-                    ),
+                    MaterialPageRoute(builder: (context) => EnrollUser()),
                     (route) => false,
                   );
                 },
@@ -460,11 +462,11 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                     fontSize: Responsive.isMobileSmall(context)
                         ? 20
                         : Responsive.isMobileMedium(context) ||
-                                Responsive.isMobileLarge(context)
-                            ? 24
-                            : Responsive.isTabletPortrait(context)
-                                ? 28
-                                : 30,
+                              Responsive.isMobileLarge(context)
+                        ? 24
+                        : Responsive.isTabletPortrait(context)
+                        ? 28
+                        : 30,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -510,7 +512,7 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
               ],
             ),
           ),
-          SizedBox(height: 10)
+          SizedBox(height: 10),
         ],
       ),
     );
@@ -526,11 +528,11 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
           size: Responsive.isMobileSmall(context)
               ? 18
               : Responsive.isMobileMedium(context) ||
-                      Responsive.isMobileLarge(context)
-                  ? 20
-                  : Responsive.isTabletPortrait(context)
-                      ? 25
-                      : 25,
+                    Responsive.isMobileLarge(context)
+              ? 20
+              : Responsive.isTabletPortrait(context)
+              ? 25
+              : 25,
         ),
         SizedBox(width: 8),
         Expanded(
@@ -544,11 +546,11 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 11
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 13
-                          : Responsive.isTabletPortrait(context)
-                              ? 16
-                              : 18,
+                            Responsive.isMobileLarge(context)
+                      ? 13
+                      : Responsive.isTabletPortrait(context)
+                      ? 16
+                      : 18,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -560,11 +562,11 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -584,11 +586,7 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
           color: Colors.orange[50],
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          Icons.face,
-          size: screenHeight * 0.15,
-          color: iconColors,
-        ),
+        child: Icon(Icons.face, size: screenHeight * 0.15, color: iconColors),
       );
     }
 
@@ -598,9 +596,7 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
       width: size,
       height: size,
       clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle),
       child: OverflowBox(
         alignment: Alignment.center,
         child: FittedBox(
@@ -644,11 +640,11 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
               fontSize: Responsive.isMobileSmall(context)
                   ? 18
                   : Responsive.isMobileMedium(context) ||
-                          Responsive.isMobileLarge(context)
-                      ? 20
-                      : Responsive.isTabletPortrait(context)
-                          ? 22
-                          : 25,
+                        Responsive.isMobileLarge(context)
+                  ? 20
+                  : Responsive.isTabletPortrait(context)
+                  ? 22
+                  : 25,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -685,11 +681,11 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -724,9 +720,7 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                 onTap: () {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => EnrollUser(),
-                    ),
+                    MaterialPageRoute(builder: (context) => EnrollUser()),
                     (route) => false,
                   );
                 },
@@ -744,14 +738,16 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                       ),
                     ],
                   ),
-                  child: Icon(Icons.arrow_back,
-                      color: Colors.grey[800]!,
-                      size: Responsive.isMobileSmall(context)
-                          ? 25
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 30
-                              : 35),
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: Colors.grey[800]!,
+                    size: Responsive.isMobileSmall(context)
+                        ? 25
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 30
+                        : 35,
+                  ),
                 ),
               ),
               SizedBox(height: 5),
@@ -762,11 +758,11 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -812,16 +808,18 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                             ),
                           ],
                         ),
-                  child: Icon(Icons.camera_alt,
-                      color: appState.locationAddress == ""
-                          ? Colors.grey[800]
-                          : Colors.white,
-                      size: Responsive.isMobileSmall(context)
-                          ? 30
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 40
-                              : 45),
+                  child: Icon(
+                    Icons.camera_alt,
+                    color: appState.locationAddress == ""
+                        ? Colors.grey[800]
+                        : Colors.white,
+                    size: Responsive.isMobileSmall(context)
+                        ? 30
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 40
+                        : 45,
+                  ),
                 ),
               ),
               SizedBox(height: 8),
@@ -834,11 +832,11 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -873,14 +871,16 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                       ),
                     ],
                   ),
-                  child: Icon(Icons.cameraswitch_rounded,
-                      color: Colors.grey[800]!,
-                      size: Responsive.isMobileSmall(context)
-                          ? 25
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 30
-                              : 35),
+                  child: Icon(
+                    Icons.cameraswitch_rounded,
+                    color: Colors.grey[800]!,
+                    size: Responsive.isMobileSmall(context)
+                        ? 25
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 30
+                        : 35,
+                  ),
                 ),
               ),
               SizedBox(height: 5),
@@ -891,11 +891,11 @@ class _EnrollmentCaptureScreenState extends State<EnrollmentCaptureScreen>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w500,
                 ),
               ),

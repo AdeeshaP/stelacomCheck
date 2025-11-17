@@ -185,7 +185,6 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
                 key: _key,
                 child: TextFormField(
                   cursorColor: actionBtnColor,
-                  autofocus: true,
                   controller: codeController,
                   keyboardType: TextInputType.text,
                   style: TextStyle(

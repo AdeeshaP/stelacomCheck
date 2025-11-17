@@ -4,9 +4,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:stelacom_check/app-services/api_service.dart';
 import 'package:stelacom_check/constants.dart';
+import 'package:stelacom_check/controllers/appstate_controller.dart';
 import 'package:stelacom_check/responsive.dart';
 import 'package:stelacom_check/screens/Enroll/enroll_capture_screen.dart';
 import 'package:stelacom_check/screens/home/first_screen.dart';
@@ -15,12 +17,10 @@ import '../../components/utils/custom_success_dialog.dart';
 import '../../components/utils/dialogs.dart';
 import 'package:jiffy/jiffy.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sliding_widget/sliding_widget.dart';
 import 'package:unique_identifier/unique_identifier.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:stelacom_check/providers/appstate_provider.dart';
 
 class EnrollmentPreview extends StatefulWidget {
   final String imagePath;
@@ -51,7 +51,7 @@ class _CheckInScreenState extends State<EnrollmentPreview>
   double locationDistance = 0.0;
   bool inCameraPreview = true;
   late var timer;
-  late AppState appState;
+  late AppStateController appState;
   Position? currentLocation;
   late bool servicePermission = false;
   late LocationPermission locationPermission;
@@ -59,7 +59,7 @@ class _CheckInScreenState extends State<EnrollmentPreview>
   @override
   void initState() {
     super.initState();
-    appState = Provider.of<AppState>(context, listen: false);
+    appState = Get.put(AppStateController());
 
     getSharedPrefs();
     WidgetsBinding.instance.addObserver(this);
@@ -492,14 +492,14 @@ class _CheckInScreenState extends State<EnrollmentPreview>
   void saveAction(imagePath) async {
     showProgressDialog(context);
     String? uniqueID = await UniqueIdentifier.serial;
-    MultipartRequest request = MultipartRequest(
+    http.MultipartRequest request = http.MultipartRequest(
       'POST',
       Uri.parse(
           'http://icheck-face-recognition-stelacom.us-east-2.elasticbeanstalk.com/api/train'),
     );
 
     request.files.add(
-      await MultipartFile.fromPath(
+      await http.MultipartFile.fromPath(
         'file',
         File(imagePath).path,
         contentType: MediaType('application', 'png'),
@@ -520,7 +520,7 @@ class _CheckInScreenState extends State<EnrollmentPreview>
     request.fields['long'] = long.toString();
     request.fields['address'] = appState.locationAddress;
 
-    StreamedResponse r = await request.send();
+    http.StreamedResponse r = await request.send();
     closeDialog(context);
     print("r.statusCode == " + r.statusCode.toString());
     if (r.statusCode == 200) {

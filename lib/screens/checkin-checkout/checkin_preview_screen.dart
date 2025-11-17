@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:get/get.dart';
+import 'package:stelacom_check/controllers/appstate_controller.dart';
 import 'package:stelacom_check/screens/checkin-checkout/checkin_capture_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart';
+import 'package:http/http.dart' as http;
 import 'package:stelacom_check/app-services/api_service.dart';
 import 'package:stelacom_check/constants.dart';
-import 'package:stelacom_check/providers/appstate_provider.dart';
 import 'package:stelacom_check/responsive.dart';
 import 'package:stelacom_check/screens/home/first_screen.dart';
 import '../../components/utils/attendance_successful_popup.dart';
@@ -16,7 +17,6 @@ import '../../components/utils/custom_error_dialog.dart';
 import '../../components/utils/dialogs.dart';
 import 'package:jiffy/jiffy.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sliding_widget/sliding_widget.dart';
 import 'package:unique_identifier/unique_identifier.dart';
@@ -50,7 +50,7 @@ class _CheckInScreenState extends State<CheckinPreviewScreen>
   String locationId = "";
   double locationDistance = 0.0;
   bool inCameraPreview = true;
-  late AppState appState;
+  late AppStateController appState;
   Position? currentLocation;
   late bool servicePermission = false;
   late LocationPermission locationPermission;
@@ -61,7 +61,7 @@ class _CheckInScreenState extends State<CheckinPreviewScreen>
   @override
   void initState() {
     super.initState();
-    appState = Provider.of<AppState>(context, listen: false);
+    appState = Get.put(AppStateController());
 
     getSharedPrefs();
     WidgetsBinding.instance.addObserver(this);
@@ -506,14 +506,14 @@ class _CheckInScreenState extends State<CheckinPreviewScreen>
     print("longitude is ${long.toString()}");
     showProgressDialog(context);
     String? uniqueID = await await UniqueIdentifier.serial;
-    MultipartRequest request = MultipartRequest(
+    http.MultipartRequest request = http.MultipartRequest(
       'POST',
       Uri.parse(
           'http://icheck-face-recognition-stelacom.us-east-2.elasticbeanstalk.com/api/recognize'),
     );
 
     request.files.add(
-      await MultipartFile.fromPath(
+      await http.MultipartFile.fromPath(
         'file',
         File(imagePath).path,
         contentType: MediaType('application', 'png'),
@@ -544,7 +544,7 @@ class _CheckInScreenState extends State<CheckinPreviewScreen>
     request.fields['accuracy'] = accuracy.toString();
     request.fields['LocationId'] = locationId;
     request.fields['LocationDistance'] = locationDistance.toString();
-    StreamedResponse r = await request.send();
+    http.StreamedResponse r = await request.send();
 
     print(r.statusCode);
 

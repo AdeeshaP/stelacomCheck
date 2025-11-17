@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:get/get.dart';
+import 'package:stelacom_check/controllers/appstate_controller.dart';
 import 'package:stelacom_check/screens/Visits/preview_screen.dart';
 import 'package:stelacom_check/responsive.dart';
 import 'package:camera/camera.dart';
@@ -11,12 +13,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:stelacom_check/app-services/api_service.dart';
 import 'package:stelacom_check/constants.dart';
 import 'package:stelacom_check/main.dart';
-import 'package:stelacom_check/providers/appstate_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:jiffy/jiffy.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../components/utils/custom_error_dialog.dart';
 import '../../components/utils/dialogs.dart';
 import '../home/first_screen.dart';
@@ -48,7 +47,7 @@ class _VisitCaptureState extends State<VisitCapture>
   String deviceModel = "";
   String deviceVersion = "";
   late var timer;
-  late AppState appState;
+  late AppStateController appState;
   Position? currentLocation;
   late bool servicePermission = false;
   late LocationPermission locationPermission;
@@ -59,7 +58,7 @@ class _VisitCaptureState extends State<VisitCapture>
   @override
   void initState() {
     super.initState();
-    appState = Provider.of<AppState>(context, listen: false);
+    appState = Get.put(AppStateController());
 
     getSharedPrefs();
     WidgetsBinding.instance.addObserver(this);
@@ -113,7 +112,8 @@ class _VisitCaptureState extends State<VisitCapture>
       }
     } else if (permission == LocationPermission.deniedForever) {
       return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
+        'Location permissions are permanently denied, we cannot request permissions.',
+      );
     } else {
       currentLocation = await Geolocator.getCurrentPosition();
       await _getAddressFromCoordinated();
@@ -145,8 +145,10 @@ class _VisitCaptureState extends State<VisitCapture>
         _cameraIndex = 0;
       }
       _cameraController = CameraController(
-          firstCamera!, ResolutionPreset.medium,
-          enableAudio: false);
+        firstCamera!,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
       _initializeControllerFuture = _cameraController!.initialize();
 
       if (mounted) {
@@ -170,9 +172,11 @@ class _VisitCaptureState extends State<VisitCapture>
     if (!ison) {
       await Geolocator.openLocationSettings();
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) {
-          return HomeScreen(index2: 0);
-        }),
+        MaterialPageRoute(
+          builder: (context) {
+            return HomeScreen(index2: 0);
+          },
+        ),
       );
     }
   }
@@ -191,11 +195,9 @@ class _VisitCaptureState extends State<VisitCapture>
           message: 'Location permissions are denied.',
           onOkPressed: () {
             closeDialog(context);
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => HomeScreen(index2: 0),
-              ),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => HomeScreen(index2: 0)));
             Geolocator.requestPermission();
           },
           iconData: Icons.block,
@@ -213,11 +215,9 @@ class _VisitCaptureState extends State<VisitCapture>
           message: 'Location permissions are permanently denied.',
           onOkPressed: () {
             closeDialog(context);
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => HomeScreen(index2: 0),
-              ),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => HomeScreen(index2: 0)));
             Geolocator.requestPermission();
           },
           iconData: Icons.block,
@@ -326,7 +326,9 @@ class _VisitCaptureState extends State<VisitCapture>
 
   _getAddressFromCoordinated() async {
     List<Placemark> placemarks = await placemarkFromCoordinates(
-        currentLocation!.latitude, currentLocation!.longitude);
+      currentLocation!.latitude,
+      currentLocation!.longitude,
+    );
 
     Placemark place = placemarks[0];
 
@@ -358,8 +360,10 @@ class _VisitCaptureState extends State<VisitCapture>
 
   Future _onCameraSwitched(CameraDescription cameraDescription) async {
     _cameraController = CameraController(
-        cameraDescription, ResolutionPreset.medium,
-        enableAudio: false);
+      cameraDescription,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
 
     try {
       await _initializeControllerFuture;
@@ -385,41 +389,35 @@ class _VisitCaptureState extends State<VisitCapture>
 
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(index2: 0),
-          ),
+          MaterialPageRoute(builder: (context) => HomeScreen(index2: 0)),
           (route) => false,
         );
       },
-      child: Consumer<AppState>(builder: (context, appState, child) {
-        return Scaffold(
-          backgroundColor: screenbgcolor,
-          body: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        children: [
-                          _buildHeader(context),
-                          Expanded(
-                            child: _buildFaceRecognitionArea(screenHeight),
-                          ),
-                          _buildBottomButtons(),
-                        ],
-                      ),
+      child: Scaffold(
+        backgroundColor: screenbgcolor,
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        _buildHeader(context),
+                        Expanded(
+                          child: _buildFaceRecognitionArea(screenHeight),
+                        ),
+                        _buildBottomButtons(),
+                      ],
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 
@@ -442,10 +440,7 @@ class _VisitCaptureState extends State<VisitCapture>
           Row(
             children: [
               IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios,
-                  color: screenHeadingColor,
-                ),
+                icon: Icon(Icons.arrow_back_ios, color: screenHeadingColor),
                 onPressed: () {
                   Navigator.pushAndRemoveUntil(
                     context,
@@ -469,11 +464,11 @@ class _VisitCaptureState extends State<VisitCapture>
                     fontSize: Responsive.isMobileSmall(context)
                         ? 20
                         : Responsive.isMobileMedium(context) ||
-                                Responsive.isMobileLarge(context)
-                            ? 24
-                            : Responsive.isTabletPortrait(context)
-                                ? 28
-                                : 30,
+                              Responsive.isMobileLarge(context)
+                        ? 24
+                        : Responsive.isTabletPortrait(context)
+                        ? 28
+                        : 30,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -519,7 +514,7 @@ class _VisitCaptureState extends State<VisitCapture>
               ],
             ),
           ),
-          SizedBox(height: 5)
+          SizedBox(height: 5),
         ],
       ),
     );
@@ -535,11 +530,11 @@ class _VisitCaptureState extends State<VisitCapture>
           size: Responsive.isMobileSmall(context)
               ? 18
               : Responsive.isMobileMedium(context) ||
-                      Responsive.isMobileLarge(context)
-                  ? 20
-                  : Responsive.isTabletPortrait(context)
-                      ? 25
-                      : 25,
+                    Responsive.isMobileLarge(context)
+              ? 20
+              : Responsive.isTabletPortrait(context)
+              ? 25
+              : 25,
         ),
         SizedBox(width: 8),
         Expanded(
@@ -553,11 +548,11 @@ class _VisitCaptureState extends State<VisitCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 13
-                          : Responsive.isTabletPortrait(context)
-                              ? 16
-                              : 18,
+                            Responsive.isMobileLarge(context)
+                      ? 13
+                      : Responsive.isTabletPortrait(context)
+                      ? 16
+                      : 18,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -569,11 +564,11 @@ class _VisitCaptureState extends State<VisitCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 16
-                              : 18,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 16
+                      : 18,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -593,11 +588,7 @@ class _VisitCaptureState extends State<VisitCapture>
           color: Colors.orange[50],
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          Icons.face,
-          size: screenHeight * 0.15,
-          color: iconColors,
-        ),
+        child: Icon(Icons.face, size: screenHeight * 0.15, color: iconColors),
       );
     }
 
@@ -607,9 +598,7 @@ class _VisitCaptureState extends State<VisitCapture>
       width: size,
       height: size,
       clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle),
       child: OverflowBox(
         alignment: Alignment.center,
         child: FittedBox(
@@ -653,11 +642,11 @@ class _VisitCaptureState extends State<VisitCapture>
               fontSize: Responsive.isMobileSmall(context)
                   ? 18
                   : Responsive.isMobileMedium(context) ||
-                          Responsive.isMobileLarge(context)
-                      ? 20
-                      : Responsive.isTabletPortrait(context)
-                          ? 22
-                          : 25,
+                        Responsive.isMobileLarge(context)
+                  ? 20
+                  : Responsive.isTabletPortrait(context)
+                  ? 22
+                  : 25,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -690,16 +679,17 @@ class _VisitCaptureState extends State<VisitCapture>
                 'Position your face in the circle and ensure adequate light.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: Responsive.isMobileSmall(context)
-                        ? 12
-                        : Responsive.isMobileMedium(context) ||
-                                Responsive.isMobileLarge(context)
-                            ? 14
-                            : Responsive.isTabletPortrait(context)
-                                ? 16
-                                : 18,
-                    fontWeight: FontWeight.w500),
+                  color: Colors.black87,
+                  fontSize: Responsive.isMobileSmall(context)
+                      ? 12
+                      : Responsive.isMobileMedium(context) ||
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 16
+                      : 18,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ),
@@ -752,14 +742,16 @@ class _VisitCaptureState extends State<VisitCapture>
                       ),
                     ],
                   ),
-                  child: Icon(Icons.arrow_back,
-                      color: Colors.grey[800]!,
-                      size: Responsive.isMobileSmall(context)
-                          ? 25
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 30
-                              : 35),
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: Colors.grey[800]!,
+                    size: Responsive.isMobileSmall(context)
+                        ? 25
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 30
+                        : 35,
+                  ),
                 ),
               ),
               SizedBox(height: 5),
@@ -770,11 +762,11 @@ class _VisitCaptureState extends State<VisitCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -821,16 +813,18 @@ class _VisitCaptureState extends State<VisitCapture>
                             ),
                           ],
                         ),
-                  child: Icon(Icons.camera_alt,
-                      color: appState.locationAddress == ""
-                          ? Colors.grey[800]
-                          : Colors.white,
-                      size: Responsive.isMobileSmall(context)
-                          ? 30
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 40
-                              : 45),
+                  child: Icon(
+                    Icons.camera_alt,
+                    color: appState.locationAddress == ""
+                        ? Colors.grey[800]
+                        : Colors.white,
+                    size: Responsive.isMobileSmall(context)
+                        ? 30
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 40
+                        : 45,
+                  ),
                 ),
               ),
               SizedBox(height: 8),
@@ -843,11 +837,11 @@ class _VisitCaptureState extends State<VisitCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -882,14 +876,16 @@ class _VisitCaptureState extends State<VisitCapture>
                       ),
                     ],
                   ),
-                  child: Icon(Icons.cameraswitch_rounded,
-                      color: Colors.grey[800]!,
-                      size: Responsive.isMobileSmall(context)
-                          ? 25
-                          : Responsive.isMobileMedium(context) ||
-                                  Responsive.isMobileLarge(context)
-                              ? 30
-                              : 35),
+                  child: Icon(
+                    Icons.cameraswitch_rounded,
+                    color: Colors.grey[800]!,
+                    size: Responsive.isMobileSmall(context)
+                        ? 25
+                        : Responsive.isMobileMedium(context) ||
+                              Responsive.isMobileLarge(context)
+                        ? 30
+                        : 35,
+                  ),
                 ),
               ),
               SizedBox(height: 5),
@@ -900,11 +896,11 @@ class _VisitCaptureState extends State<VisitCapture>
                   fontSize: Responsive.isMobileSmall(context)
                       ? 12
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 14
-                          : Responsive.isTabletPortrait(context)
-                              ? 18
-                              : 20,
+                            Responsive.isMobileLarge(context)
+                      ? 14
+                      : Responsive.isTabletPortrait(context)
+                      ? 18
+                      : 20,
                   fontWeight: FontWeight.w500,
                 ),
               ),

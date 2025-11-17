@@ -8,12 +8,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 class NoPermissionGranted extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      body: Container(
-        height: MediaQuery.of(context).size.height + 24,
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: appBgColor,
+      body: Padding(
+        padding: EdgeInsets.all(20.0),
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
+              SizedBox(height: 50),
               Text(
                 'Welcome to iCheck\nAttendance Management System',
                 textAlign: TextAlign.center,
@@ -21,11 +25,11 @@ class NoPermissionGranted extends StatelessWidget {
                   fontSize: Responsive.isMobileSmall(context)
                       ? 20
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 22
-                          : Responsive.isTabletPortrait(context)
-                              ? 25
-                              : 25,
+                            Responsive.isMobileLarge(context)
+                      ? 22
+                      : Responsive.isTabletPortrait(context)
+                      ? 25
+                      : 25,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
@@ -49,11 +53,11 @@ class NoPermissionGranted extends StatelessWidget {
                   fontSize: Responsive.isMobileSmall(context)
                       ? 17
                       : Responsive.isMobileMedium(context) ||
-                              Responsive.isMobileLarge(context)
-                          ? 20
-                          : Responsive.isTabletPortrait(context)
-                              ? 22
-                              : 25,
+                            Responsive.isMobileLarge(context)
+                      ? 20
+                      : Responsive.isTabletPortrait(context)
+                      ? 22
+                      : 25,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -65,8 +69,9 @@ class NoPermissionGranted extends StatelessWidget {
                     foregroundColor: actionBtnTextColor,
                     backgroundColor: actionBtnColor,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18.0),
-                        side: BorderSide(color: actionBtnTextColor)),
+                      borderRadius: BorderRadius.circular(18.0),
+                      side: BorderSide(color: actionBtnTextColor),
+                    ),
                   ),
                   onPressed: () async {
                     Map<Permission, PermissionStatus> permissions = await [
